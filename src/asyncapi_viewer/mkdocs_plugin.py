@@ -55,6 +55,7 @@ class AsyncAPIPluginConfig(Config):
     viewer_css_integrity = config_options.Type(str, default="auto")
     load_assets = config_options.Type(bool, default=True)
     embed_css = config_options.Type(bool, default=True)
+    search_fallback = config_options.Type(bool, default=True)
     asyncapi_file = config_options.Deprecated(
         message=(
             "The '{}' option is no longer used: MkDocs copies every non-Markdown "
@@ -107,7 +108,9 @@ class AsyncAPIPlugin(BasePlugin[AsyncAPIPluginConfig]):
             "viewer_css_integrity": self.config.viewer_css_integrity,
             "load_assets": self.config.load_assets,
             "embed_css": self.config.embed_css,
+            "search_fallback": self.config.search_fallback,
             "url_resolver": self.resolve_url,
+            "file_resolver": self.resolve_file,
             "warn": log.warning,
         }
         return config
@@ -140,19 +143,37 @@ class AsyncAPIPlugin(BasePlugin[AsyncAPIPluginConfig]):
         self._files = files
         return markdown
 
-    def resolve_url(self, url: str) -> str:
-        """Turn a src attribute into a URL relative to the current page."""
+    def _target(self, url: str) -> "tuple[str, Optional[File]] | None":
+        """The docs-relative path a local src points at, and its File when MkDocs knows it."""
         page, files = self._page, self._files
         if page is None or files is None:
-            return url
+            return None
         scheme, netloc, path, query, fragment = urlsplit(url)
         if scheme or netloc or not path:
-            return url
+            return None
         if path.startswith("/"):
             target = posixpath.normpath(path.lstrip("/"))
         else:
             target = posixpath.normpath(posixpath.join(posixpath.dirname(page.file.src_uri), path))
-        target_file = files.get_file_from_path(target)
+        return target, files.get_file_from_path(target)
+
+    def resolve_file(self, url: str) -> Optional[str]:
+        """The on-disk path of a local src for the search fallback; None for URLs and unknown files."""
+        found = self._target(url)
+        if found is None or found[1] is None:
+            return None
+        path = found[1].abs_src_path
+        return path if path and Path(path).is_file() else None
+
+    def resolve_url(self, url: str) -> str:
+        """Turn a src attribute into a URL relative to the current page."""
+        found = self._target(url)
+        if found is None:
+            return url
+        page = self._page
+        assert page is not None
+        target, target_file = found
+        _, _, _, query, fragment = urlsplit(url)
         if target_file is None:
             log.warning(
                 f"Doc file '{page.file.src_uri}' references AsyncAPI document '{url}', "

@@ -122,6 +122,9 @@ export class AsyncAPIViewerElement extends LitElement {
 
   protected override firstUpdated(): void {
     this.#deriveColors();
+    // The build-time search fallback (a hidden list of headings for site search indexers,
+    // emitted by the Python extension as light-DOM children) has done its job once we render.
+    for (const el of this.querySelectorAll(':scope > [data-asyncapi-fallback]')) el.remove();
   }
 
   protected override updated(): void {

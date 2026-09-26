@@ -29,8 +29,10 @@ code spans are left alone.
 With the default ``renderer`` (``"viewer"``) each match becomes an
 ``<asyncapi-viewer>`` element with kebab-case attributes, validated against the
 options schema the viewer ships (see :mod:`asyncapi_viewer.options`); the first
-match on a page also emits the module script and the theme stylesheet. With
-``renderer="legacy"`` the 1.x output is produced instead: a container ``<div>``
+match on a page also emits the module script and the theme stylesheet. When
+``src`` names a local file the build can read, the element also carries a hidden
+list of operation headings, channel addresses and message names for site search
+indexers (see :mod:`asyncapi_viewer.fallback`). With ``renderer="legacy"`` the 1.x output is produced instead: a container ``<div>``
 with data attributes plus the React-based viewer and its runner script (see
 :mod:`asyncapi_viewer.assets`). The legacy renderer stays for one major version.
 """
@@ -47,7 +49,7 @@ from markdown import Markdown
 from markdown.extensions import Extension
 from markdown.preprocessors import Preprocessor
 
-from asyncapi_viewer import assets, options
+from asyncapi_viewer import assets, fallback, options
 
 log = logging.getLogger("asyncapi_viewer")
 
@@ -118,6 +120,7 @@ _FALSE = {"false", "0", "no", "off"}
 
 WarnFn = Callable[[str], None]
 ResolveFn = Callable[[str], str]
+FileResolveFn = Callable[[str], Optional[str]]
 
 
 def _default_warn(message: str) -> None:
@@ -286,7 +289,21 @@ class AsyncAPIViewerPreprocessor(Preprocessor):
                 parts.append(html.escape(attribute, quote=True))
             else:
                 parts.append(f'{html.escape(attribute, quote=True)}="{html.escape(value, quote=True)}"')
-        return f"<asyncapi-viewer {' '.join(parts)}></asyncapi-viewer>"
+        inner = self._search_fallback(src, bool(normalised.get("useChannelAddressAsIdentifier"))) if src else ""
+        return f"<asyncapi-viewer {' '.join(parts)}>{inner}</asyncapi-viewer>"
+
+    def _search_fallback(self, src: str, use_channel_address: bool) -> str:
+        """The hidden index list for a local document, or ``""``. Never fetches."""
+        if not self.extension.getConfig("search_fallback"):
+            return ""
+        path = self.extension.getConfig("file_resolver")(src)
+        if not path:
+            return ""
+        try:
+            return fallback.build(path, use_channel_address)
+        except (OSError, ValueError) as exc:
+            self._warn(f"asyncapi-viewer: could not read '{src}' for the search fallback: {exc}")
+            return ""
 
     def _container(self, attrs: Dict[str, Optional[str]]) -> str:
         """Legacy renderer: the 1.x container ``<div>`` with data attributes."""
@@ -443,6 +460,17 @@ class AsyncAPIViewerExtension(Extension):
                 _default_resolve,
                 "Callable mapping the src attribute (and relative asset URLs) to the URL "
                 "the browser should fetch.",
+            ],
+            "search_fallback": [
+                True,
+                "New viewer: when src is a local file the build can read, emit a hidden list of "
+                "operation headings, channel addresses and message names inside the element for "
+                "site search indexers. The viewer removes it on render. Remote documents are never fetched.",
+            ],
+            "file_resolver": [
+                fallback.default_file_resolver,
+                "Callable mapping the src attribute to a readable local path for search_fallback, "
+                "or None. The default resolves relative paths against the working directory.",
             ],
             "warn": [_default_warn, "Callable that receives warning messages."],
         }

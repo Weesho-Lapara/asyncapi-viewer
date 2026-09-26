@@ -216,8 +216,11 @@ def test_default_renderer_serves_the_packaged_viewer_from_the_site(tmp_path):
     assert 'id="asyncapi-viewer-2" src="schema.json" sidebar>' in index
     assert index.count(f'<script type="module" src="assets/asyncapi-viewer/asyncapi-viewer.js" integrity="{assets.integrity("asyncapi-viewer.js")}" crossorigin="anonymous"></script>') == 1
     assert f'<link rel="stylesheet" href="assets/asyncapi-viewer/asyncapi-theme.css" integrity="{assets.integrity("asyncapi-theme.css")}" crossorigin="anonymous">' in index
-    assert "querySelectorAll" not in index and "data-asyncapi-" not in index
+    assert "querySelectorAll" not in index and "data-asyncapi-src" not in index and "data-asyncapi-config" not in index
+    # search fallback (chunk 2.3): the local document was read and indexed inside each element
+    assert index.count("<ul data-asyncapi-fallback hidden><li>subscribe user/signedup <span>user/signedup</span>") == 2
     nested = (site / "api/page/index.html").read_text()
+    assert "<ul data-asyncapi-fallback hidden>" in nested  # resolved relative to the nested page
     assert 'src="../../assets/asyncapi-viewer/asyncapi-viewer.js"' in nested
     assert 'href="../../assets/asyncapi-viewer/asyncapi-theme.css"' in nested
 
