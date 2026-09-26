@@ -4,8 +4,9 @@
 The bare extension, no MkDocs: this is what any other Python-Markdown host gets. The viewer
 is loaded from the Vite build through the e2e static server (``node scripts/serve.mjs``
 serves the repository root), so ``npm run build`` must have run. Requires the package
-(``pip install -e ".[yaml]"`` from the repository root) so the YAML example gets a search
-fallback too. Run from anywhere::
+(``pip install -e ".[yaml]"`` from the repository root, then ``python scripts/sync_viewer.py``
+for the options schema copy); the YAML extra gives the YAML example a search fallback too.
+Run from anywhere::
 
     python viewer/test/e2e/markdown/render.py
 """
