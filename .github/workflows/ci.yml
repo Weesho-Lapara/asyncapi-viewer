@@ -59,7 +59,7 @@ jobs:
         run: test -s dist/asyncapi-viewer.js && test -s dist/asyncapi-viewer.iife.js
 
   viewer-e2e:
-    name: "Viewer (Playwright: accessibility, CSP, screenshots)"
+    name: "Viewer (Playwright: accessibility, CSP, Python-Markdown page, screenshots)"
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -77,6 +77,12 @@ jobs:
         run: npm run build
       - name: Install browsers
         run: npx playwright install --with-deps chromium firefox webkit
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Render the plain Python-Markdown page (markdown.spec.ts)
+        working-directory: ${{ github.workspace }}
+        run: python -m pip install -e ".[yaml]" && python viewer/test/e2e/markdown/render.py
       - name: Playwright
         run: npx playwright test
       - uses: actions/upload-artifact@v7

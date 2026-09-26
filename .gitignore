@@ -43,5 +43,6 @@ viewer/test/coverage/corpus-v2/
 viewer/test/e2e/.results/
 viewer/test/e2e/screenshots/
 viewer/playwright-report/
+viewer/test/e2e/markdown/index.html
 src/asyncapi_viewer/static/
 src/asyncapi_viewer/options.schema.json
