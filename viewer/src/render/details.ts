@@ -70,7 +70,22 @@ export const detailStyles = css`
   .chip__value {
     color: var(--_ink);
   }
-  /* Bindings: the key sits in a pill, the value beside it; described ones take a full row. */
+  /* Pill style: key and value in one pill; a described one becomes a full-width row. */
+  .chip__head {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+  .chip--row {
+    display: grid;
+    gap: 4px;
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: var(--_radius-sm);
+  }
+  /* Split style (servers): the key in the pill, the value beside it. */
   .binding {
     display: flex;
     flex-wrap: wrap;
@@ -220,14 +235,24 @@ function chipValue(value: unknown): TemplateResult {
   return html`<pre class="chip__value">${JSON.stringify(value, null, 2)}</pre>`;
 }
 
-/** A binding: the key in a pill, the value beside it, a description underneath when there is one. */
-function bindingChip(scopeLabel: string, protocol: string, leaf: { key: string; value: unknown }, title: string): TemplateResult {
+export type BindingStyle = 'pill' | 'split';
+
+/**
+ * A binding. `pill`: key and value together in one pill (operations, replies). `split`: the key
+ * in the pill and the value beside it (servers, whose values are URLs). A description, when
+ * there is one, sits underneath on a full-width row.
+ */
+function bindingChip(scopeLabel: string, protocol: string, leaf: { key: string; value: unknown }, title: string, style: BindingStyle): TemplateResult {
   const description = isSchemaShaped(leaf.value) && typeof leaf.value.description === 'string' ? leaf.value.description : undefined;
-  return html`<li class="binding ${description ? 'binding--described' : ''}" title=${title}>
-    <span class="binding__head">
-      <span class="chip mono"><span class="chip__scope">${scopeLabel}</span>${leaf.key}</span>
-      ${chipValue(leaf.value)}
-    </span>
+  const key = html`<span class="mono"><span class="chip__scope">${scopeLabel}</span>${leaf.key}</span>`;
+  if (style === 'split') {
+    return html`<li class="binding ${description ? 'binding--described' : ''}" title=${title}>
+      <span class="binding__head"><span class="chip">${key}</span>${chipValue(leaf.value)}</span>
+      ${description ? html`<span class="chip__desc">${renderInline(description)}</span>` : nothing}
+    </li>`;
+  }
+  return html`<li class="chip ${description ? 'chip--row' : ''}" title=${title}>
+    <span class="chip__head">${key}${chipValue(leaf.value)}</span>
     ${description ? html`<span class="chip__desc">${renderInline(description)}</span>` : nothing}
   </li>`;
 }
@@ -260,12 +285,12 @@ export function flattenBinding(b: Binding): Array<{ key: string; value: unknown 
 }
 
 /** Chips reading `<scope>.<key> <value>`; empty when there are none. */
-export function renderBindings(bindings: Binding[], title = 'Bindings'): TemplateResult | typeof nothing {
+export function renderBindings(bindings: Binding[], title = 'Bindings', style: BindingStyle = 'pill'): TemplateResult | typeof nothing {
   if (bindings.length === 0) return nothing;
   return html`<div class="block">
     <h4 class="sub-title">${title}</h4>
     <ul class="chips">
-      ${bindings.flatMap((b) => flattenBinding(b).map((leaf) => bindingChip(`${b.scope}.`, b.protocol, leaf, `${b.protocol} binding`)))}
+      ${bindings.flatMap((b) => flattenBinding(b).map((leaf) => bindingChip(`${b.scope}.`, b.protocol, leaf, `${b.protocol} binding`, style)))}
     </ul>
   </div>`;
 }
@@ -315,7 +340,7 @@ export function renderReply(reply: Reply, prefix: string): TemplateResult {
         ? html`<div class="reply__row reply__row--bindings">
             <span class="label">Bindings</span>
             <ul class="chips">
-              ${reply.channel.bindings.flatMap((b) => flattenBinding(b).map((leaf) => bindingChip('reply.channel.', b.protocol, leaf, `${b.protocol} binding of the reply channel`)))}
+              ${reply.channel.bindings.flatMap((b) => flattenBinding(b).map((leaf) => bindingChip('reply.channel.', b.protocol, leaf, `${b.protocol} binding of the reply channel`, 'pill')))}
             </ul>
           </div>`
         : nothing}
