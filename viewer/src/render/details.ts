@@ -1,6 +1,6 @@
 /**
- * Shared detail blocks: the Parameters table, binding chips, the security list and the reply
- * block (spec 4.7 items 5, 7, 8, 9). Servers reuse chips and security in chunk 1.14.
+ * Shared detail blocks: the Parameters table, binding and security chips and the reply
+ * block (spec 4.7 items 5, 7, 8, 9). Servers reuse the chips in their split style.
  */
 import { css, html, nothing, type TemplateResult } from 'lit';
 import type { Binding, Parameter, Reply, SecurityRequirement } from '../model/types.js';
@@ -127,32 +127,14 @@ export const detailStyles = css`
     overflow-wrap: anywhere;
     max-width: 48ch;
   }
-  .sec {
-    display: grid;
-    gap: 6px;
-    margin: 0;
-    padding: 0;
-    list-style: none;
+  .sec__id {
+    font: 500 12.5px/1.5 var(--_font-mono);
+    color: var(--_primary-text);
+    text-decoration: none;
   }
-  .sec li {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 4px 10px;
-    font-size: 13px;
-  }
-  .sec__type {
-    font: 400 12px/1.5 var(--_font-mono);
-    color: var(--_muted);
-  }
-  .sec__scopes {
-    font: 400 12px/1.5 var(--_font-mono);
-    color: var(--_ink-2);
-  }
-  .sec__desc {
-    flex-basis: 100%;
-    color: var(--_ink-2);
-    font-size: 12.5px;
+  .sec__id:hover,
+  .sec__id:focus-visible {
+    text-decoration: underline;
   }
   .reply {
     padding: 14px 16px;
@@ -295,19 +277,37 @@ export function renderBindings(bindings: Binding[], title = 'Bindings', style: B
   </div>`;
 }
 
-export function renderSecurity(security: SecurityRequirement[], serversHref: string): TemplateResult | typeof nothing {
+/**
+ * A security requirement as a chip, in the same two styles as bindings: `pill` (operations) puts
+ * the scheme id, its type and scopes in one pill, the id linking to the Servers section; `split`
+ * (servers) puts the id in the pill and the type beside it, with nothing to link to. A description
+ * sits underneath on a full-width row, as for bindings.
+ */
+function securityChip(s: SecurityRequirement, style: BindingStyle, serversHref?: string): TemplateResult {
+  const id = serversHref ? html`<a class="sec__id" href=${serversHref}>${s.id}</a>` : html`<span class="mono">${s.id}</span>`;
+  // An inline v3 requirement has no key, so the normaliser names it after its type: show it once.
+  const type = s.type && s.type !== s.id ? html`<span class="chip__value mono">${s.type}</span>` : nothing;
+  const scopes = s.scopes.length > 0 ? html`<span class="chip__value mono"><span class="chip__scope">scopes </span>${s.scopes.join(' · ')}</span>` : nothing;
+  const description = s.description ? html`<span class="chip__desc">${renderInline(s.description)}</span>` : nothing;
+  if (style === 'split') {
+    return html`<li class="binding ${s.description ? 'binding--described' : ''}">
+      <span class="binding__head"><span class="chip">${id}</span>${type}${scopes}</span>
+      ${description}
+    </li>`;
+  }
+  return html`<li class="chip ${s.description ? 'chip--row' : ''}">
+    <span class="chip__head">${id}${type}${scopes}</span>
+    ${description}
+  </li>`;
+}
+
+/** Security requirements as chips (spec 4.7 item 9). `serversHref` links each scheme to the Servers section. */
+export function renderSecurity(security: SecurityRequirement[], style: BindingStyle = 'pill', serversHref?: string): TemplateResult | typeof nothing {
   if (security.length === 0) return nothing;
   return html`<div class="block">
     <h4 class="sub-title">Security</h4>
-    <ul class="sec">
-      ${security.map(
-        (s) => html`<li>
-          <a href=${serversHref}>${s.id}</a>
-          ${s.type ? html`<span class="sec__type">${s.type}</span>` : nothing}
-          ${s.scopes.length > 0 ? html`<span class="sec__scopes">scopes: ${s.scopes.join(', ')}</span>` : nothing}
-          ${s.description ? html`<span class="sec__desc">${renderInline(s.description)}</span>` : nothing}
-        </li>`,
-      )}
+    <ul class="chips">
+      ${security.map((s) => securityChip(s, style, serversHref))}
     </ul>
   </div>`;
 }

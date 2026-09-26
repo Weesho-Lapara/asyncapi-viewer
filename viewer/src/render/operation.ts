@@ -359,7 +359,7 @@ export function renderOperation(op: Operation, ctx: OperationContext): TemplateR
             )
           : html`<p class="tree__empty block">This operation has no messages.</p>`}
         ${renderBindings(bindings)}
-        ${renderSecurity(op.security, `#${prefix}--servers`)}
+        ${renderSecurity(op.security, 'pill', `#${prefix}--servers`)}
         ${op.reply ? renderReply(op.reply, prefix) : nothing}
       </div>
       ${open && message ? html`<div class="op__example">${renderExamplePanel(message, examples, exampleCtx, `${anchor}--example`)}</div>` : nothing}

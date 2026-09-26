@@ -220,7 +220,7 @@ function serverEntry(server: Server, prefix: string): TemplateResult {
             </tbody>
           </table>`
         : nothing}
-      ${renderSecurity(server.security, `#${anchor}`)}
+      ${renderSecurity(server.security, 'split')}
       ${renderBindings(server.bindings, 'Bindings', 'split')}
     </div>
   </details>`;
