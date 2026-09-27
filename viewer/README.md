@@ -63,6 +63,11 @@ Serve the repository root (`node scripts/serve.mjs`, or any static server) and o
 - `test/e2e/instant.spec.ts`: a Material for MkDocs fixture site with `navigation.instant`
   (`test/e2e/mkdocs/`, built by `build.py`, ignored): viewers render on every page reached
   through instant navigation and through history, with no full load. Skipped until built.
+- `test/e2e/react.spec.ts`: a React 19 app (`test/e2e/react/`, built by `build.mjs` from the
+  packed npm tarball, so `files` and `exports` are tested too; `dist/` ignored): JSX props arrive
+  as attributes (booleans bare or removed, `className` as `class`), `src`, theme, sidebar and
+  label changes from state re-render, repeated unmount and remount, and a document built as a
+  JavaScript object handed over as a Blob URL. Skipped until built.
 - `test/e2e/sidebar.spec.ts`: the resizable sidebar (drag, keyboard, clamping, double-click reset,
   no handle in the drawer layout).
 - `test/e2e/screenshots.spec.ts`: captures every example document at 1280, 820 and 380px in

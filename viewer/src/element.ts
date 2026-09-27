@@ -37,6 +37,10 @@ export class AsyncAPIViewerElement extends LitElement {
   #loadedSrc: string | undefined;
   #result: LoadResult | undefined;
   #model: Document | undefined;
+  #resolver: RefResolver | undefined;
+  /** Reference-loading problems from the last load, kept so the model can be rebuilt. */
+  #preloadProblems: Problem[] = [];
+  #modelBuiltWith: string | undefined;
   #problems: Problem[] = [];
   #resolved: Resolved = 'light';
   #derived: Record<string, string> = {};
@@ -312,6 +316,7 @@ export class AsyncAPIViewerElement extends LitElement {
     this.#options = parseOptions(this.getAttributeNames().map((n) => [n, this.getAttribute(n)] as const));
     this.#theme.mode = this.#options.theme;
     this.requestUpdate();
+    if (this.#model && this.#options.src === this.#loadedSrc && this.#modelKey() !== this.#modelBuiltWith) this.#normalize();
     void this.#load();
   }
 
@@ -365,6 +370,8 @@ export class AsyncAPIViewerElement extends LitElement {
     this.#loadedSrc = src;
     this.#result = undefined;
     this.#model = undefined;
+    this.#resolver = undefined;
+    this.#preloadProblems = [];
     this.#problems = [];
     this.#trees.clear();
     this.#panels.clear();
@@ -387,22 +394,42 @@ export class AsyncAPIViewerElement extends LitElement {
       const resolver = new RefResolver(result.url, result.data);
       const problems = await resolver.preload();
       if (this.#loadedSrc !== src) return;
-      const o = this.#options;
-      this.#model = normalize({
-        resolver,
-        data: result.data,
-        specVersion: result.specVersion,
-        specMajor: result.specMajor,
-        problems,
-        options: {
-          labels: { publish: o.publishLabel, subscribe: o.subscribeLabel, send: o.sendLabel, receive: o.receiveLabel, request: o.requestLabel, reply: o.replyLabel },
-          useChannelAddressAsIdentifier: o.useChannelAddressAsIdentifier,
-          applyTraits: o.parserOptions.applyTraits,
-        },
-      });
-      this.#problems = this.#model.problems;
+      this.#resolver = resolver;
+      this.#preloadProblems = problems;
+      this.#normalize();
     }
     this.requestUpdate();
+  }
+
+  /** The options the model is built from, as a key: when it changes the model is rebuilt. */
+  #modelKey(): string {
+    const o = this.#options;
+    return JSON.stringify([o.publishLabel, o.subscribeLabel, o.sendLabel, o.receiveLabel, o.requestLabel, o.replyLabel, o.useChannelAddressAsIdentifier, o.parserOptions.applyTraits]);
+  }
+
+  /**
+   * Build the model from the loaded document and the current options. Runs after a load and
+   * again when a model option (badge labels, channel-address labelling, applyTraits) changes on
+   * a loaded document, as it does when a framework such as React updates attributes in place.
+   */
+  #normalize(): void {
+    const result = this.#result;
+    if (!result?.ok || !this.#resolver) return;
+    const o = this.#options;
+    this.#modelBuiltWith = this.#modelKey();
+    this.#model = normalize({
+      resolver: this.#resolver,
+      data: result.data,
+      specVersion: result.specVersion,
+      specMajor: result.specMajor,
+      problems: [...this.#preloadProblems],
+      options: {
+        labels: { publish: o.publishLabel, subscribe: o.subscribeLabel, send: o.sendLabel, receive: o.receiveLabel, request: o.requestLabel, reply: o.replyLabel },
+        useChannelAddressAsIdentifier: o.useChannelAddressAsIdentifier,
+        applyTraits: o.parserOptions.applyTraits,
+      },
+    });
+    this.#problems = this.#model.problems;
   }
 
   override render() {

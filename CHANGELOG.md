@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+- Badge labels (`publish-label` and the other five), `use-channel-address-as-identifier` and
+  `parser-options` now take effect when they change after the document has loaded, as they do
+  when React or another framework updates the element's attributes in place. Before, only a new
+  `src` rebuilt the model.
+
+### Added
+- A React 19 app in the Playwright suite (`viewer/test/e2e/react/`) installs the packed npm
+  package and checks JSX props, `src` changes, unmounting and a document from component state.
+
 ## asyncapi-viewer 2.0.0 (2026-09-27)
 
 ### Changed

@@ -49,5 +49,8 @@ viewer/playwright-report/
 viewer/test/e2e/markdown/index.html
 viewer/test/e2e/mkdocs/site/
 viewer/test/e2e/mkdocs/docs/examples/
+viewer/test/e2e/react/node_modules/
+viewer/test/e2e/react/dist/
+viewer/test/e2e/react/public/
 src/asyncapi_viewer/static/
 src/asyncapi_viewer/options.schema.json

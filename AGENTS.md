@@ -34,7 +34,9 @@ viewer/                              the web component (Lit + TypeScript, Vite l
   test/e2e/                          Playwright: accessibility (axe), CSP page, screenshot capture,
                                      markdown/ (a page rendered by plain Python-Markdown; render.py
                                      writes index.html, ignored) and mkdocs/ (a Material fixture site
-                                     with navigation.instant; build.py writes site/, ignored)
+                                     with navigation.instant; build.py writes site/, ignored) and
+                                     react/ (a React 19 app that installs the packed npm package;
+                                     build.mjs writes dist/, ignored; own package-lock.json)
   test/fixtures/expected/            hand-written expected models for the docs example documents
   demo/                              visual test bench; demo/spec-examples/ is a generated copy of
                                      asyncapi/spec examples (npm run sync-examples), never edited by hand
@@ -71,6 +73,7 @@ cd viewer && npm run coverage            # normaliser over the AsyncAPI example 
 cd viewer && npm run e2e:install && npm run e2e   # Playwright: accessibility, CSP page, screenshots
 python viewer/test/e2e/markdown/render.py         # before npm run e2e: the plain Python-Markdown page
 python viewer/test/e2e/mkdocs/build.py            # before npm run e2e: the instant-navigation fixture site
+node viewer/test/e2e/react/build.mjs              # before npm run e2e: the React app (after npm run build)
 python -m asyncapi_viewer copy-assets DIR          # viewer files plus SRI hashes for hosts without plugin hooks
 cd viewer && npm run sync-examples       # refresh demo/spec-examples/ (spec corpus copy) after npm run coverage
 python scripts/sync_viewer.py            # copy the built viewer, theme, manifest and schema into the package

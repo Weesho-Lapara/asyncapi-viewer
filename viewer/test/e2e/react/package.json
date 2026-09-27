@@ -1,0 +1,17 @@
+{
+  "name": "asyncapi-viewer-react-fixture",
+  "private": true,
+  "description": "A React 19 app that installs the packed asyncapi-viewer npm package, for react.spec.ts. build.mjs installs the package tarball (never saved here) and builds dist/.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "vite": "^8.0.0"
+  }
+}
