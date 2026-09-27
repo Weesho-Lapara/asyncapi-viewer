@@ -1,5 +1,38 @@
 # Changelog
 
+## Unreleased (2.0.0)
+
+### Changed
+- **A viewer of our own.** The wrapped `@asyncapi/react-component` is replaced by a web component
+  that ships with the package: AsyncAPI 2 and 3, JSON and YAML, `$ref` resolution, a normalised
+  model, payload trees, example panels (generated from the schema when a message has none),
+  bindings and security as chips with their details, a sidebar with search, tag filters and
+  grouping, light and dark modes following the page, a container-based layout for documentation
+  columns, and no inline script or style, so `script-src 'self'; style-src 'self'` suffices.
+  Typefaces follow Swagger UI (Titillium Web, Open Sans, Source Code Pro) with system fallbacks;
+  the page opts in to loading them.
+- **Assets are served from the site by default.** The MkDocs plugin publishes the packaged
+  viewer under `assets/asyncapi-viewer/` with Subresource Integrity hashes; the bare extension
+  defaults to the jsDelivr copy of the same version. `viewer_theme` names the theme stylesheet;
+  `viewer_css` is a deprecated alias. `embed_css` does nothing and warns. The runner script is gone.
+- Attributes are validated against the schema the viewer ships. `schemaID` is deprecated (warns,
+  does nothing); `parserOptions` honours `applyTraits` only. New attributes `theme`, `themeToggle`
+  and `searchKeepSections`. Kebab-case spellings are accepted.
+- Anchors inside the viewer are `<element id>--<section>--<item>`.
+
+### Added
+- Search index: for a local `src` the build emits a hidden list of operation headings, channel
+  addresses and message names inside the element (option `search_fallback`, on by default;
+  `file_resolver` decides what counts as a local file; YAML needs the `yaml` extra). The viewer
+  removes it on render. The build still never fetches documents.
+- `python -m asyncapi_viewer copy-assets DIR` copies the packaged viewer and prints its hashes,
+  for Zensical and other hosts without plugin hooks.
+- `renderer: legacy` keeps the 1.x output for one major version.
+- A Customising page: two accents in a theme file, every design token, fonts, Material palettes.
+
+### Removed
+- The weekly re-pin of the React component (`update-viewer.yml`) and the `unpkg.com` defaults.
+
 ## asyncapi-viewer 1.2.0 (2026-09-26)
 
 ### Changed

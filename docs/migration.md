@@ -1,4 +1,35 @@
-# Migrating from older names
+# Migration
+
+## From 1.x to 2.0
+
+2.0 replaces the wrapped AsyncAPI React component with a viewer of its own. Pages and `mkdocs.yml`
+keep working unchanged; what changes is what readers see and how the assets are served.
+
+**What looks different.** A header with the title, version and a download link; operations with a
+badge row, a payload tree with expand and collapse, and an example panel beside the message on
+wide viewers; servers, messages and schemas as collapsible entries; a sidebar with search, tag
+filters and grouping; light and dark modes that follow the page. No flow diagram. Bindings and
+security requirements render as chips with their details.
+
+**Assets.** The viewer ships in the package and is served from your site by default, with
+integrity hashes; nothing is loaded from unpkg any more. `viewer_css` now means the theme
+stylesheet and is a deprecated alias of `viewer_theme`. `embed_css` does nothing (the container
+CSS it emitted is not needed) and warns. The runner script is gone; `load_assets: false` now means
+adding a module script and a stylesheet yourself. See [Configuration](configuration.md).
+
+**Attributes.** `schemaID` is accepted, warns once and does nothing. `parserOptions` honours only
+`applyTraits`; other keys warn. New: `theme`, `themeToggle` and `searchKeepSections`. Everything
+else keeps its name, default and meaning, including `messageExamples` defaulting to expanded.
+See [Attributes](attributes.md).
+
+**Anchors.** Ids inside the viewer are `<element id>--<section>--<item>`, prefixed by the element id
+so several viewers on one page never collide.
+
+**If something in your document does not render as before**, the 1.x renderer stays selectable
+for one major version: set `renderer: legacy` on the plugin (or the extension) to get the React
+component back with the old assets, and please open an issue with the document.
+
+## From older names
 
 The project has had three names. Every older way of using it keeps working for one major version.
 

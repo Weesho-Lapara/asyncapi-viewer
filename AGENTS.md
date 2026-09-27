@@ -44,8 +44,8 @@ prototypes/docusaurus/               unpublished proof of concept, see ROADMAP.m
 tests/                               pytest; test_mkdocs_plugin.py builds real sites in tmp_path
 docs/ + mkdocs.yml                   documentation site, built with the plugin (Material theme);
                                      docs/examples/ holds the AsyncAPI 2 and 3 demo documents
-.github/workflows/ci.yml             tests on Python 3.9-3.14, strict docs build under MkDocs and
-                                     Zensical, builds both distributions
+.github/workflows/ci.yml             tests on Python 3.9-3.14, viewer build, lint, tests and Playwright,
+                                     strict docs build under MkDocs and Zensical, both distributions
 .github/workflows/docs.yml           deploys the docs site to GitHub Pages on push to main
                                      (Pages source must be set to "GitHub Actions" once, in Settings)
 .github/workflows/publish.yml        PyPI trusted publishing on GitHub release
@@ -117,9 +117,13 @@ python scripts/sync_viewer.py            # copy the built viewer, theme, manifes
   Use a `scratch/` directory (ignored) for demo sites.
 - `mkdocs.yml` lists both `plugins: [asyncapi-viewer]` and `markdown_extensions: [asyncapi_viewer]` on
   purpose: Zensical ignores `plugins` and honours `markdown_extensions`; the plugin does not
-  duplicate an extension the user already listed. Keep both.
+  duplicate an extension the user already listed. Keep both. The extension entry carries explicit
+  `/assets/asyncapi-viewer/` asset paths for Zensical (the plugin overrides them under MkDocs);
+  run `python -m asyncapi_viewer copy-assets docs/assets/asyncapi-viewer` (ignored by git) before
+  `zensical build`, as the CI docs job does.
 - The docs site is the end-to-end test. New behaviour should be visible on `docs/demo.md` when it
-  makes sense, and `mkdocs build --strict` must stay clean.
+  makes sense, and `mkdocs build --strict` must stay clean. The site runs on the new viewer;
+  `docs/stylesheets/extra.css` loads the design fonts and scopes the demo's customised theme.
 - All 2.0 viewer work lives on the `viewer-2` branch until release; `main` keeps 1.x fixes and is
   merged into the branch when needed. CI runs on pushes to both. `viewer/dist/` and
   `viewer/node_modules/` are never committed; `package-lock.json` is.

@@ -107,18 +107,27 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
       - name: Install
-        run: python -m pip install --upgrade pip && python -m pip install -e ".[docs]" zensical && python scripts/sync_viewer.py
+        run: python -m pip install --upgrade pip && python -m pip install -e ".[docs]" zensical
+      - name: Build the viewer and copy it into the package
+        run: npm --prefix viewer ci && npm --prefix viewer run build && python scripts/sync_viewer.py
       - name: MkDocs strict build
         run: mkdocs build --strict --site-dir site-mkdocs
-      - name: Zensical build
-        run: zensical build
-      - name: Both outputs contain the rendered demo
+      - name: Zensical build (no plugin hooks: copy the viewer under docs/ first)
+        run: python -m asyncapi_viewer copy-assets docs/assets/asyncapi-viewer && zensical build
+      - name: Both outputs contain the rendered demo and serve the viewer
         run: |
           for site in site-mkdocs site; do
-            test "$(grep -o 'data-asyncapi-src="[^"]*"' "$site/demo/index.html" | wc -l)" -ge 3 || { echo "no viewer markup in $site"; exit 1; }
-            grep -q 'integrity="sha384-' "$site/demo/index.html" || { echo "no SRI attributes in $site"; exit 1; }
+            test "$(grep -o '<asyncapi-viewer [^>]*src="[^"]*"' "$site/demo/index.html" | wc -l)" -ge 4 || { echo "no viewer markup in $site"; exit 1; }
+            grep -q 'type="module" src="[^"]*assets/asyncapi-viewer/asyncapi-viewer.js"' "$site/demo/index.html" || { echo "no module script in $site"; exit 1; }
+            grep -q 'data-asyncapi-fallback' "$site/demo/index.html" || echo "note: no search fallback in $site (expected under Zensical)"
+            test -s "$site/assets/asyncapi-viewer/asyncapi-viewer.js" || { echo "viewer not served by $site"; exit 1; }
+            test -s "$site/assets/asyncapi-viewer/asyncapi-theme.css" || { echo "theme not served by $site"; exit 1; }
           done
+          grep -q 'integrity="sha384-' site-mkdocs/demo/index.html || { echo "no SRI attributes in the MkDocs build"; exit 1; }
 
   package:
     name: Build distributions

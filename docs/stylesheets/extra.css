@@ -1,2 +1,15 @@
+/* The viewer's design fonts, loaded by the page (the viewer never loads fonts itself). */
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600&family=Titillium+Web:wght@600&family=Source+Code+Pro:wght@400;500&display=swap");
+
 /* Give the viewer some breathing room inside Material's content column. */
-.asyncapi-viewer { margin: 1.5rem 0; }
+asyncapi-viewer {
+  display: block;
+  margin: 1.5rem 0;
+}
+
+/* The "Customise" example on the demo page: two accents and a squarer radius. */
+asyncapi-viewer.demo-custom {
+  --asyncapi-primary: #0F766E;
+  --asyncapi-secondary: #9F1239;
+  --asyncapi-radius: 4px;
+}

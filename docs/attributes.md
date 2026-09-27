@@ -5,7 +5,7 @@ Two syntaxes are accepted and take the same names:
 === "Element"
 
     ```html
-    <asyncapi-viewer src="events.yaml" sidebar="false" publishLabel="PUBLISH"></asyncapi-viewer>
+    <asyncapi-viewer src="events.yaml" sidebar publishLabel="PUBLISH"></asyncapi-viewer>
     ```
 
 === "Fenced block"
@@ -13,53 +13,59 @@ Two syntaxes are accepted and take the same names:
     ````markdown
     ```asyncapi
     src: events.yaml
-    sidebar: false
+    sidebar: true
     publishLabel: PUBLISH
     ```
     ````
 
 In the fenced form each line is `key: value`; quotes around a value are optional, a bare key means
 `true`, `#` starts a comment, and the path may follow the language instead
-(```` ```asyncapi events.yaml ````). Only `src` is required. Attribute names are case-insensitive. Boolean attributes accept
+(```` ```asyncapi events.yaml ````). Only `src` is required. Attribute names are case-insensitive,
+and the kebab-case spelling (`send-label`) is accepted too. Boolean attributes accept
 `true`/`false`, `1`/`0`, `yes`/`no`, `on`/`off`; a bare attribute means `true`.
 
 | Attribute | Values | Default | Effect |
 |---|---|---|---|
 | `src` | path or URL | required | The AsyncAPI document (JSON or YAML) |
-| `id` | string | `asyncapi-viewer-N` | HTML id of the container element |
-| `sidebar` | boolean | `false` | Show the navigation sidebar (a toggle button inside the viewer when the column is narrow) |
-| `info` | boolean | `true` | Show the info section |
-| `servers` | boolean | `true` | Show servers |
-| `operations` | boolean | `true` | Show operations |
-| `messages` | boolean | `true` | Show messages |
-| `schemas` | boolean | `true` | Show schemas |
-| `errors` | boolean | `true` | Show parser errors |
-| `showMessageExamples` | boolean | viewer default | Show examples for standalone messages |
-| `messageExamples` | boolean | `true` | Expand message examples |
-| `showServers` | `byDefault`, `bySpecTags`, `byServersTags` | `byDefault` | How the sidebar groups servers |
-| `showOperations` | `byDefault`, `bySpecTags`, `byOperationsTags` | `byDefault` | How the sidebar groups operations |
-| `useChannelAddressAsIdentifier` | boolean | viewer default | AsyncAPI 3: label operations by channel address |
-| `publishLabel`, `subscribeLabel` | string | `PUB`, `SUB` | Operation labels for AsyncAPI 2 |
-| `sendLabel`, `receiveLabel`, `requestLabel`, `replyLabel` | string | `SEND`, `RECEIVE`, `REQUEST`, `REPLY` | Operation labels for AsyncAPI 3 |
-| `parserOptions` | JSON object | viewer default | Passed to the AsyncAPI parser |
-| `schemaID` | string | container id | The viewer's `schemaID` option |
+| `id` | string | `asyncapi-viewer-N` | Element id; also the prefix of every anchor inside the viewer |
+| `sidebar` | boolean | `false` | Show the navigation sidebar: a column from 1100px of viewer width, a drawer behind a menu button below |
+| `info` | boolean | `true` | Show the Info section |
+| `servers` | boolean | `true` | Show the Servers section |
+| `operations` | boolean | `true` | Show the operations |
+| `messages` | boolean | `true` | Show the Messages section (component messages) |
+| `schemas` | boolean | `true` | Show the Schemas section (component schemas) |
+| `errors` | boolean | `true` | Show the Problems panel (load and validation problems) |
+| `showMessageExamples` | boolean | `false` | Show example panels in the Messages section |
+| `messageExamples` | boolean | `true` | Example panels start expanded; `false` starts them collapsed |
+| `showServers` | `byDefault`, `bySpecTags`, `byServersTags` | `byDefault` | List servers in the sidebar, grouped by the document's tags or by their own |
+| `showOperations` | `byDefault`, `bySpecTags`, `byOperationsTags` | `byDefault` | Sidebar grouping for operations |
+| `useChannelAddressAsIdentifier` | boolean | `false` | AsyncAPI 3: head each operation with its channel address instead of its title |
+| `publishLabel`, `subscribeLabel` | string | `PUB`, `SUB` | Badge text for AsyncAPI 2 publish and subscribe operations |
+| `sendLabel`, `receiveLabel` | string | `SEND`, `RECEIVE` | Badge text for AsyncAPI 3 send and receive operations |
+| `requestLabel`, `replyLabel` | string | `REQUEST`, `REPLY` | Badge text for AsyncAPI 3 operations that carry a `reply` |
+| `theme` | `auto`, `light`, `dark` | `auto` | `auto` follows the page: Material's colour scheme, `html[data-theme]`, then the system preference |
+| `themeToggle` | boolean | `false` | Show a light/dark toggle in the viewer header |
+| `searchKeepSections` | boolean | `false` | Keep the Info, Servers, Messages and Schemas links visible while a sidebar search is active |
+| `parserOptions` | JSON object | `{"applyTraits": true}` | Only `applyTraits` is honoured; other keys warn and are ignored |
+| `schemaID` | string | | Deprecated: accepted, warns once, does nothing |
 
-These map onto the React component's
-[configuration](https://github.com/asyncapi/asyncapi-react/blob/master/docs/configuration/config-modification.md).
-The default for `messageExamples` follows earlier releases of this plugin rather than the viewer.
+Every attribute is validated against the same schema the viewer uses, so the build and the browser
+agree on names, values and defaults.
+
+## Notes on AsyncAPI 2
+
+An AsyncAPI 2 `publish` operation is one your application *receives* and `subscribe` one it
+*sends*, which is the reverse of what the words suggest. The viewer keeps the document's own words
+on the badges (`PUB`, `SUB` by default) and colours them by direction, so a publish badge shares
+the receive colour. The badge row also names the channel, which is what a v2 operation is
+identified by.
 
 ## Examples
 
-Hide the sidebar and collapse examples:
+Sidebar on, grouped by the tags declared in the document, example panels collapsed:
 
 ```html
-<asyncapi-viewer src="events.yaml" sidebar="false" messageExamples="false"></asyncapi-viewer>
-```
-
-Group the sidebar by tags declared in the document:
-
-```html
-<asyncapi-viewer src="events.yaml" showServers="bySpecTags" showOperations="bySpecTags"></asyncapi-viewer>
+<asyncapi-viewer src="events.yaml" sidebar showOperations="bySpecTags" messageExamples="false"></asyncapi-viewer>
 ```
 
 Custom operation labels for an AsyncAPI 3 document:
@@ -68,26 +74,43 @@ Custom operation labels for an AsyncAPI 3 document:
 <asyncapi-viewer src="orders.yaml" sendLabel="EMIT" receiveLabel="ON"></asyncapi-viewer>
 ```
 
-Pass parser options as JSON (single quotes around the attribute keep the JSON readable):
+Always dark, with the viewer's own toggle so readers can switch:
+
+```html
+<asyncapi-viewer src="events.yaml" theme="dark" themeToggle></asyncapi-viewer>
+```
+
+Leave traits unapplied (single quotes around the attribute keep the JSON readable):
 
 ```html
 <asyncapi-viewer src="events.yaml" parserOptions='{"applyTraits": false}'></asyncapi-viewer>
 ```
 
-Both the paired and the self-closing form are accepted, and a tag may span several lines:
+Both the paired and the self-closing form are accepted, and an element may span several lines.
+HTML global attributes such as `class`, `data-*` and `aria-*` pass through to the element, which is
+how the [demo](demo.md) scopes a custom theme to one viewer:
 
 ```html
 <asyncapi-viewer
     src="events.yaml"
-    sidebar="false"
+    class="wide"
+    sidebar
 />
 ```
+
+## Anchors
+
+Every section, operation, message and schema has an id of the form `<element id>--<section>--<item>`,
+for example `asyncapi-viewer-1--operations--emitOrderPlaced`. Linking to one scrolls to it and
+moves keyboard focus there, and opens the entry when it is collapsible. Set `id` on the element
+when you link to anchors from other pages, so a change in the number of viewers on the page does
+not move them.
 
 ## Validation
 
 Unknown attributes and invalid values are reported as warnings and skipped; the remaining
 attributes still apply. Under MkDocs the warnings go through the MkDocs logger, so
-`mkdocs build --strict` fails on them. A tag without `src` renders a visible error in place.
+`mkdocs build --strict` fails on them. An element without `src` renders a visible message in place.
 
 Elements inside fenced or indented code blocks and inline code spans are left alone, and an
 `asyncapi` fence nested inside a longer fence (four backticks around three) stays a code sample,
