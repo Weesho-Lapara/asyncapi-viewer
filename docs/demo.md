@@ -13,6 +13,9 @@ Select the spec you want to view.
   <optgroup label="AsyncAPI 2">
     <option value="accounts" data-src="accounts-v2.json" data-attrs='{"sidebar": "", "show-operations": "bySpecTags", "message-examples": "false"}'>Accounts service (JSON)</option>
   </optgroup>
+  <optgroup label="Errors">
+    <option value="error" data-src="https://example.invalid/asyncapi.yaml" data-attrs='{}'>A document that cannot be loaded</option>
+  </optgroup>
 </select>
 
 <div data-demo-spec="orders" markdown>
@@ -56,6 +59,17 @@ The sidebar with operations grouped by the document's tags; example panels start
 
 ````markdown
 <asyncapi-viewer src="examples/accounts-v2.json" sidebar showOperations="bySpecTags" messageExamples="false"></asyncapi-viewer>
+````
+
+</div>
+
+<div data-demo-spec="error" hidden markdown>
+
+This one is meant to fail: the host does not exist. Readers get a message naming the URL instead of
+a blank box. A wrong local path is caught earlier, because `mkdocs build --strict` fails on it.
+
+````markdown
+<asyncapi-viewer src="https://example.invalid/asyncapi.yaml"></asyncapi-viewer>
 ````
 
 </div>

@@ -18,7 +18,9 @@ function initDemo() {
     const attrs = JSON.parse(option.dataset.attrs);
     for (const name of Object.keys(applied)) viewer.removeAttribute(name);
     for (const [name, v] of Object.entries(attrs)) viewer.setAttribute(name, v);
-    viewer.setAttribute('src', folder + option.dataset.src);
+    // Documents under docs/examples/ keep the page-relative folder; absolute URLs pass through.
+    const src = option.dataset.src;
+    viewer.setAttribute('src', /^https?:\/\//.test(src) ? src : folder + src);
     applied = attrs;
   }
 
