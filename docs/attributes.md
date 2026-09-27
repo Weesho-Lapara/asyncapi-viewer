@@ -12,17 +12,22 @@ Two syntaxes are accepted and take the same names:
 
     ````markdown
     ```asyncapi
-    src: events.yaml
-    sidebar: true
-    publishLabel: PUBLISH
+        src: events.yaml
+        sidebar: true
+        publishLabel: PUBLISH
     ```
     ````
+    
+    !!! note "Fenced form"
 
-In the fenced form each line is `key: value`; quotes around a value are optional, a bare key means
-`true`, `#` starts a comment, and the path may follow the language instead
-(```` ```asyncapi events.yaml ````). Only `src` is required. Attribute names are case-insensitive,
-and the kebab-case spelling (`send-label`) is accepted too. Boolean attributes accept
-`true`/`false`, `1`/`0`, `yes`/`no`, `on`/`off`; a bare attribute means `true`.
+        - Each line is `key: value`.
+        - Quotes around a value are optional.
+        - `#` starts a comment.
+        - The path may follow the language instead (```` ```asyncapi events.yaml ````).
+        - Only `src` is required.
+        - Attribute names are case-insensitive.
+        - The kebab-case spelling (`send-label`) is accepted too.
+        - Boolean attributes accept `true`/`false`, `1`/`0`, `yes`/`no`, `on`/`off`, and a bare attribute means `true`.
 
 | Attribute | Values | Default | Effect |
 |---|---|---|---|
@@ -40,7 +45,7 @@ and the kebab-case spelling (`send-label`) is accepted too. Boolean attributes a
 | `showServers` | `byDefault`, `bySpecTags`, `byServersTags` | `byDefault` | List servers in the sidebar, grouped by the document's tags or by their own |
 | `showOperations` | `byDefault`, `bySpecTags`, `byOperationsTags` | `byDefault` | Sidebar grouping for operations |
 | `useChannelAddressAsIdentifier` | boolean | `false` | AsyncAPI 3: head each operation with its channel address instead of its title |
-| `publishLabel`, `subscribeLabel` | string | `PUB`, `SUB` | Badge text for AsyncAPI 2 publish and subscribe operations |
+| `publishLabel`, `subscribeLabel` | string | `PUB`, `SUB` | Badge text for AsyncAPI 2 publish and subscribe operations<br><br>**Note:** An AsyncAPI 2 `publish` operation is one your application *receives*, while `subscribe` is one it *sends*. This is the reverse of what the words suggest. |
 | `sendLabel`, `receiveLabel` | string | `SEND`, `RECEIVE` | Badge text for AsyncAPI 3 send and receive operations |
 | `requestLabel`, `replyLabel` | string | `REQUEST`, `REPLY` | Badge text for AsyncAPI 3 operations that carry a `reply` |
 | `theme` | `auto`, `light`, `dark` | `auto` | `auto` follows the page: Material's colour scheme, `html[data-theme]`, then the system preference |
@@ -49,16 +54,8 @@ and the kebab-case spelling (`send-label`) is accepted too. Boolean attributes a
 | `parserOptions` | JSON object | `{"applyTraits": true}` | Only `applyTraits` is honoured; other keys warn and are ignored |
 | `schemaID` | string | | Deprecated: accepted, warns once, does nothing |
 
-Every attribute is validated against the same schema the viewer uses, so the build and the browser
-agree on names, values and defaults.
 
-## Notes on AsyncAPI 2
 
-An AsyncAPI 2 `publish` operation is one your application *receives* and `subscribe` one it
-*sends*, which is the reverse of what the words suggest. The viewer keeps the document's own words
-on the badges (`PUB`, `SUB` by default) and colours them by direction, so a publish badge shares
-the receive colour. The badge row also names the channel, which is what a v2 operation is
-identified by.
 
 ## Examples
 
@@ -86,9 +83,7 @@ Leave traits unapplied (single quotes around the attribute keep the JSON readabl
 <asyncapi-viewer src="events.yaml" parserOptions='{"applyTraits": false}'></asyncapi-viewer>
 ```
 
-Both the paired and the self-closing form are accepted, and an element may span several lines.
-HTML global attributes such as `class`, `data-*` and `aria-*` pass through to the element, which is
-how the [demo](demo.md) scopes a custom theme to one viewer:
+Both the paired and the self-closing form are accepted and HTML global attributes such as `class`, `data-*` and `aria-*` pass through to the element.
 
 ```html
 <asyncapi-viewer
@@ -100,11 +95,11 @@ how the [demo](demo.md) scopes a custom theme to one viewer:
 
 ## Anchors
 
-Every section, operation, message and schema has an id of the form `<element id>--<section>--<item>`,
-for example `asyncapi-viewer-1--operations--emitOrderPlaced`. Linking to one scrolls to it and
-moves keyboard focus there, and opens the entry when it is collapsible. Set `id` on the element
-when you link to anchors from other pages, so a change in the number of viewers on the page does
-not move them.
+Every section, operation, message and schema has an id of the form `<element id>--<section>--<item>`, for example `asyncapi-viewer-1--operations--emitOrderPlaced`. 
+
+Linking to one scrolls to it and moves keyboard focus there, and opens the entry when it is collapsible. 
+
+Set `id` on the element when you link to anchors from other pages, so a change in the number of viewers on the page does not move them.
 
 ## Validation
 
