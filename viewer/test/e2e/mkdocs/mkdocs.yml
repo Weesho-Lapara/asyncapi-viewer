@@ -1,0 +1,24 @@
+# Fixture site for instant.spec.ts: Material with navigation.instant, two pages with viewers on the
+# new renderer. build.py copies the example documents in and builds into site/ (ignored).
+site_name: Instant navigation fixture
+site_url: http://127.0.0.1:8766/viewer/test/e2e/mkdocs/site/
+docs_dir: docs
+site_dir: site
+use_directory_urls: true
+
+nav:
+  - Orders: index.md
+  - Accounts: accounts.md
+  - Plain: plain.md
+
+theme:
+  name: material
+  features:
+    - navigation.instant
+    - navigation.tabs
+
+plugins:
+  - asyncapi-viewer
+
+markdown_extensions:
+  - asyncapi_viewer

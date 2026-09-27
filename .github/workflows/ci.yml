@@ -59,7 +59,7 @@ jobs:
         run: test -s dist/asyncapi-viewer.js && test -s dist/asyncapi-viewer.iife.js
 
   viewer-e2e:
-    name: "Viewer (Playwright: accessibility, CSP, Python-Markdown page, screenshots)"
+    name: "Viewer (Playwright: accessibility, CSP, Python-Markdown page, instant navigation, screenshots)"
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -80,9 +80,13 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-      - name: Render the plain Python-Markdown page (markdown.spec.ts)
+      - name: Render the plain Python-Markdown page and build the instant-navigation site (markdown.spec.ts, instant.spec.ts)
         working-directory: ${{ github.workspace }}
-        run: python -m pip install -e ".[yaml]" && python scripts/sync_viewer.py && python viewer/test/e2e/markdown/render.py
+        run: |
+          python -m pip install -e ".[yaml,docs]"
+          python scripts/sync_viewer.py
+          python viewer/test/e2e/markdown/render.py
+          python viewer/test/e2e/mkdocs/build.py
       - name: Playwright
         run: npx playwright test
       - uses: actions/upload-artifact@v7
