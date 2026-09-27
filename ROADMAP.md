@@ -226,6 +226,16 @@ What was learned:
 
 ## Ecosystem notes
 
+- **npm v12 install-time security and token changes** (GitHub changelog, 2026-07-08): npm 12
+  stops running lifecycle scripts, git dependencies and remote URL dependencies by default, and
+  2FA-bypass granular access tokens lose sensitive operations in August 2026 and direct publishing
+  around January 2027. This project is aligned: `publish.yml` uses trusted publishing (OIDC) with
+  provenance and no tokens; the published package has no install scripts and no git or remote
+  dependencies, so `npm install asyncapi-viewer` needs no approval. In `viewer/` only the dev
+  dependency `esbuild` (and `fsevents` on macOS) has a postinstall; esbuild works without it through
+  its optional platform packages. CI runs Node 22 (npm 10), so nothing changes until Node or npm is
+  bumped; when it is, run `npm approve-scripts --allow-scripts-pending` in `viewer/` and commit the
+  allowlist if `npm ci` warns.
 - **Zensical** (0.0.65) ignores `plugins:` silently but honours `markdown_extensions:` and rewrites
   relative URL-like attribute values per page itself (`src`, and the script and stylesheet paths
   the extension emits). That is why `mkdocs.yml` lists both forms. Since amendment 20 the
