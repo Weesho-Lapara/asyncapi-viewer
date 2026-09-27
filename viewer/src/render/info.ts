@@ -18,6 +18,15 @@ export const infoStyles = css`
 
 export function renderInfo(doc: Document, anchorId: string): TemplateResult {
   const facts: Array<[string, TemplateResult | typeof nothing]> = [];
+  // Tags first: they say what the document is about before the administrative facts.
+  if (doc.tags.length > 0) {
+    facts.push([
+      'Tags',
+      html`<ul class="chips">
+        ${doc.tags.map((t) => html`<li class="chip" title=${t.description ?? ''}>${t.name}${t.description ? html`<span class="visually-hidden">: ${renderInline(t.description)}</span>` : nothing}</li>`)}
+      </ul>`,
+    ]);
+  }
   if (doc.contact) {
     const c = doc.contact;
     facts.push([
@@ -33,14 +42,6 @@ export function renderInfo(doc: Document, anchorId: string): TemplateResult {
     facts.push(['Documentation', html`<a href=${doc.externalDocs.url} target="_blank" rel="noopener">${doc.externalDocs.description ?? doc.externalDocs.url}</a>`]);
   }
   if (doc.defaultContentType) facts.push(['Default content type', html`<code>${doc.defaultContentType}</code>`]);
-  if (doc.tags.length > 0) {
-    facts.push([
-      'Tags',
-      html`<ul class="chips">
-        ${doc.tags.map((t) => html`<li class="chip" title=${t.description ?? ''}>${t.name}${t.description ? html`<span class="visually-hidden">: ${renderInline(t.description)}</span>` : nothing}</li>`)}
-      </ul>`,
-    ]);
-  }
   return html`
     <section class="info" aria-labelledby=${anchorId}>
       <h2 class="section-title visually-hidden" id=${anchorId} tabindex="-1">${doc.title}</h2>
