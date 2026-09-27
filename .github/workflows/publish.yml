@@ -85,6 +85,8 @@ jobs:
         with:
           name: distributions
           path: .
+      - name: npm 11 (trusted publishing needs npm 11.5.1 or later; Node 22 ships npm 10)
+        run: npm install -g npm@11 && npm --version
       - name: Publish asyncapi-viewer to npm (trusted publishing, with provenance)
         # The first version of a package must be published by hand before npm lets a trusted
         # publisher be configured for it; a version that already exists is skipped, not an error.
