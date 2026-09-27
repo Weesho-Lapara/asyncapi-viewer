@@ -10,7 +10,10 @@ export default defineConfig({
       formats: ['es', 'iife'],
       fileName: (format) => (format === 'es' ? 'asyncapi-viewer.js' : 'asyncapi-viewer.iife.js'),
     },
-    sourcemap: true,
+    // Written for local debugging but not referenced from the bundles and not published: the
+    // maps were two thirds of the npm tarball, and a reference to an unshipped map makes browsers
+    // request a missing file.
+    sourcemap: 'hidden',
     target: 'es2022',
   },
   test: {

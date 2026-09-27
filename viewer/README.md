@@ -14,8 +14,8 @@ https://weesho-lapara.github.io/asyncapi-viewer/
 ## Use
 
 ```html
-<script type="module" src="https://cdn.jsdelivr.net/npm/asyncapi-viewer@2.1.0/dist/asyncapi-viewer.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/asyncapi-viewer@2.1.0/theme/asyncapi-theme.css">
+<script type="module" src="https://cdn.jsdelivr.net/npm/asyncapi-viewer@2.1.1/dist/asyncapi-viewer.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/asyncapi-viewer@2.1.1/theme/asyncapi-theme.css">
 
 <asyncapi-viewer src="asyncapi.yaml" sidebar></asyncapi-viewer>
 ```

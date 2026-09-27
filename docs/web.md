@@ -24,8 +24,8 @@ Python package. It needs no framework and no build step, and it knows nothing ab
 === "Script tag"
 
     ```html
-    <script type="module" src="https://cdn.jsdelivr.net/npm/asyncapi-viewer@2.1.0/dist/asyncapi-viewer.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/asyncapi-viewer@2.1.0/theme/asyncapi-theme.css">
+    <script type="module" src="https://cdn.jsdelivr.net/npm/asyncapi-viewer@2.1.1/dist/asyncapi-viewer.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/asyncapi-viewer@2.1.1/theme/asyncapi-theme.css">
     ```
 
     For pages that cannot load modules, `dist/asyncapi-viewer.iife.js` works with a plain

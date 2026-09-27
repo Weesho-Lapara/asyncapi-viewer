@@ -1,6 +1,11 @@
 # Changelog
 
-## Unreleased
+## asyncapi-viewer 2.1.1 (2026-09-27)
+
+### Changed
+- The npm package no longer ships source maps: 255 kB instead of 879 kB packed (834 kB instead of
+  3.2 MB unpacked). The bundles no longer carry a `sourceMappingURL` comment, so browsers do not
+  request a map that is not there.
 
 ### Fixed
 - The viewer no longer logs "unknown attribute 'resolved-theme' was ignored" for the attribute it

@@ -15,18 +15,20 @@ browser. It comes two ways, with the same version number:
 
 <div class="grid cards" markdown>
 
--   **For documentation sites**
+-   **For python-based docs sites**
 
     ---
 
-    `pip install asyncapi-viewer`: a Python-Markdown extension with a plugin for
+    `pip install asyncapi-viewer`
+
+    a Python-Markdown extension with a plugin for
     [MkDocs](https://www.mkdocs.org/). Works under [Zensical](https://zensical.org/) and any other
     Python-Markdown host. The viewer is served from your own site, local documents are checked at
     build time and indexed for the site search.
 
     [Getting started](getting-started.md)
 
--   **For web pages and apps**
+-   **For web pages and app-based doc sites**
 
     ---
 

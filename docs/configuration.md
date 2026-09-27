@@ -46,8 +46,8 @@ The package pins the version of the viewer it ships, and the same version is pub
 ```yaml title="mkdocs.yml"
 plugins:
   - asyncapi-viewer:
-      viewer_js: https://cdn.jsdelivr.net/npm/asyncapi-viewer@2.1.0/dist/asyncapi-viewer.js
-      viewer_theme: https://cdn.jsdelivr.net/npm/asyncapi-viewer@2.1.0/theme/asyncapi-theme.css
+      viewer_js: https://cdn.jsdelivr.net/npm/asyncapi-viewer@2.1.1/dist/asyncapi-viewer.js
+      viewer_theme: https://cdn.jsdelivr.net/npm/asyncapi-viewer@2.1.1/theme/asyncapi-theme.css
       viewer_js_integrity: ''
       viewer_theme_integrity: ''
 ```

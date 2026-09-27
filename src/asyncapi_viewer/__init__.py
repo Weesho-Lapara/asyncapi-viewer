@@ -14,7 +14,7 @@ from asyncapi_viewer.assets import (
 )
 from asyncapi_viewer.extension import AsyncAPITagExtension, AsyncAPIViewerExtension, makeExtension
 
-__version__ = "2.1.0"
+__version__ = "2.1.1"
 
 __all__ = [
     "AsyncAPIViewerExtension",
