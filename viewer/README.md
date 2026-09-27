@@ -1,11 +1,36 @@
 # asyncapi-viewer (web component)
 
-The browser side of `asyncapi-viewer`: a Lit web component that renders AsyncAPI 2 and 3 documents.
-It knows nothing about MkDocs or Python. Its only interfaces are the `<asyncapi-viewer>` element and
-its attributes, `options.schema.json`, and the CSS custom properties in `theme/asyncapi-theme.css`.
+A web component that renders [AsyncAPI](https://www.asyncapi.com/) 2 and 3 documents, JSON or
+YAML, in the browser: `<asyncapi-viewer src="asyncapi.yaml"></asyncapi-viewer>`. Operations with
+payload trees and example panels, servers, messages and schemas, a searchable sidebar with tag
+filters, light and dark themes that follow the page, a container-based layout for documentation
+columns, and no inline script or style, so `script-src 'self'; style-src 'self'` is enough.
 
-Work in progress on the `viewer-2` branch; see [ROADMAP.md](../ROADMAP.md) for the plan and
-[specs/viewer-spec.md](../specs/viewer-spec.md) for the specification.
+It is the browser side of the [`asyncapi-viewer`](https://pypi.org/project/asyncapi-viewer/)
+Python-Markdown extension and MkDocs plugin, and ships inside that package; this npm package is
+the same build for any other page. Documentation, attributes and theming:
+https://weesho-lapara.github.io/asyncapi-viewer/
+
+## Use
+
+```html
+<script type="module" src="https://cdn.jsdelivr.net/npm/asyncapi-viewer@2.0.0/dist/asyncapi-viewer.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/asyncapi-viewer@2.0.0/theme/asyncapi-theme.css">
+
+<asyncapi-viewer src="asyncapi.yaml" sidebar></asyncapi-viewer>
+```
+
+Or `npm install asyncapi-viewer` and import `asyncapi-viewer` (an ES module that defines the
+element) or load `asyncapi-viewer/iife` with a plain script tag. The theme file is optional: copy
+it to change the two accent colours, or set any `--asyncapi-*` custom property on the element.
+Fonts are never loaded by the component; the page opts in (see the theme file).
+
+## Development
+
+The component knows nothing about MkDocs or Python. Its only interfaces are the element and its
+attributes, `options.schema.json`, and the CSS custom properties in `theme/asyncapi-theme.css`.
+See [ROADMAP.md](../ROADMAP.md) for the design decisions and
+[specs/viewer-spec.md](../specs/viewer-spec.md) for the original specification.
 
 ```sh
 npm ci

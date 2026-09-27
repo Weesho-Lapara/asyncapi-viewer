@@ -1,13 +1,29 @@
 {
   "name": "asyncapi-viewer",
-  "version": "2.0.0-dev",
+  "version": "2.0.0",
   "description": "Renders AsyncAPI 2 and 3 documents as a web component: <asyncapi-viewer src=\"...\">",
+  "keywords": [
+    "asyncapi",
+    "web-component",
+    "documentation",
+    "event-driven",
+    "api",
+    "lit"
+  ],
   "license": "MIT",
+  "homepage": "https://weesho-lapara.github.io/asyncapi-viewer/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Weesho-Lapara/asyncapi-viewer.git",
+    "directory": "viewer"
+  },
+  "bugs": "https://github.com/Weesho-Lapara/asyncapi-viewer/issues",
   "type": "module",
-  "private": true,
+  "sideEffects": true,
   "files": [
     "dist",
-    "theme"
+    "theme",
+    "README.md"
   ],
   "main": "./dist/asyncapi-viewer.js",
   "module": "./dist/asyncapi-viewer.js",
@@ -15,6 +31,10 @@
     ".": "./dist/asyncapi-viewer.js",
     "./iife": "./dist/asyncapi-viewer.iife.js",
     "./theme/asyncapi-theme.css": "./theme/asyncapi-theme.css"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "scripts": {
     "dev": "vite",

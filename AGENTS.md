@@ -39,7 +39,8 @@ viewer/                              the 2.0 web component (Lit + TypeScript, Vi
   demo/                              visual test bench; demo/spec-examples/ is a generated copy of
                                      asyncapi/spec examples (npm run sync-examples), never edited by hand
 legacy/asyncapi-tag/                 deprecated shim package (own pyproject, no entry points)
-scripts/update_viewer.py             bumps the pinned viewer, rewrites assets.py, adds a CHANGELOG line
+scripts/set_version.py               one version for the Python package and the npm package (--check in CI)
+scripts/sync_viewer.py               copies the built viewer, theme, manifest and schema into the package
 prototypes/docusaurus/               unpublished proof of concept, see ROADMAP.md
 tests/                               pytest; test_mkdocs_plugin.py builds real sites in tmp_path
 docs/ + mkdocs.yml                   documentation site, built with the plugin (Material theme);
@@ -48,8 +49,8 @@ docs/ + mkdocs.yml                   documentation site, built with the plugin (
                                      strict docs build under MkDocs and Zensical, both distributions
 .github/workflows/docs.yml           deploys the docs site to GitHub Pages on push to main
                                      (Pages source must be set to "GitHub Actions" once, in Settings)
-.github/workflows/publish.yml        PyPI trusted publishing on GitHub release
-.github/workflows/update-viewer.yml  weekly viewer re-pin, tests, opens a PR
+.github/workflows/publish.yml        on a version tag: viewer build, npm publish (trusted publishing,
+                                     provenance), wheel, PyPI, GitHub release with the changelog section
 .github/workflows/compat.yml         weekly informational run against MkDocs 2.0 pre-release and
                                      newest Markdown/Material (continue-on-error)
 ```
@@ -62,7 +63,7 @@ pip install -e ".[test]"
 pytest                                   # node on PATH enables the JS syntax test
 python -m build                          # asyncapi-viewer
 python -m build legacy/asyncapi-tag
-python scripts/update_viewer.py [version]   # --check exits 1 when a newer viewer exists
+python scripts/set_version.py 2.0.0       # both package versions; --check exits 1 when they differ
 pip install -e ".[docs]" && mkdocs build --strict   # docs site; `mkdocs serve` to preview
 pip install zensical && zensical build             # same site under Zensical
 cd viewer && npm ci && npm run check && npm test && npm run build   # the 2.0 viewer (Node 22)
@@ -79,9 +80,9 @@ python scripts/sync_viewer.py            # copy the built viewer, theme, manifes
 
 - Never interpolate Markdown-sourced text into JavaScript. Per-tag data goes into HTML-escaped
   `data-asyncapi-*` attributes; `RUNNER_JS` reads them. Keep `RUNNER_JS` free of `</script>`.
-- Never load the viewer from `@latest`. `assets.py` constants are managed by
-  `scripts/update_viewer.py`; bump them in a dedicated commit and mention the upstream version in
-  `CHANGELOG.md`.
+- Never load the viewer from `@latest`. The Python package and the npm package share one version
+  (`scripts/set_version.py`); the CDN option points at the npm copy of the packaged version. The
+  legacy renderer's `assets.py` constants (the last `@asyncapi/react-component`) are frozen.
 - `url_resolver` and `warn` extension options must have non-`None`, non-bool defaults:
   Python-Markdown coerces `None`-default config values with `parseBoolValue`. Asset options use
   the string `auto` for "the renderer's default" for the same reason.
@@ -130,18 +131,22 @@ python scripts/sync_viewer.py            # copy the built viewer, theme, manifes
 - All 2.0 viewer work lives on the `viewer-2` branch until release; `main` keeps 1.x fixes and is
   merged into the branch when needed. CI runs on pushes to both. `viewer/dist/` and
   `viewer/node_modules/` are never committed; `package-lock.json` is.
-- Viewer bumps arrive as PRs from `update-viewer.yml`. PRs opened with `GITHUB_TOKEN` do not trigger
-  CI, so that workflow runs the tests itself before opening the PR; re-run CI manually if in doubt.
 
 ## Releasing
 
-1. Update `__version__` in `src/asyncapi_viewer/__init__.py` and turn the `## Unreleased` section of
-   `CHANGELOG.md` into `## asyncapi-viewer <version> (<date>)`. Commit and push to `main`.
+One version number covers the Python package on PyPI and the viewer on npm; a tag publishes both.
+
+1. `python scripts/set_version.py <version>` (writes `__version__` and `viewer/package.json`), turn
+   the `## Unreleased` section of `CHANGELOG.md` into `## asyncapi-viewer <version> (<date>)`,
+   commit and push to `main`.
 2. Tag and push: `git tag v<version> && git push origin v<version>`.
-3. `publish.yml` builds, publishes to PyPI with trusted publishing (both projects have a GitHub
-   publisher configured: repo `Weesho-Lapara/asyncapi-viewer`, workflow `publish.yml`, environment
-   `pypi`) and then creates the GitHub release with that version's changelog section as notes.
-   The shim job only runs for the `v1.2.0` tag.
+3. `publish.yml` checks that the tag, both versions and the changelog agree, builds and tests the
+   viewer, packs it, builds the wheel, publishes to npm first (trusted publishing with provenance,
+   environment `npm`; the npm-side trusted publisher must exist for `asyncapi-viewer`: GitHub
+   Actions, repository `Weesho-Lapara/asyncapi-viewer`, workflow `publish.yml`, environment `npm`),
+   then to PyPI (trusted publishing, environment `pypi`, configured for both projects), then creates
+   the GitHub release with that version's changelog section as notes and the wheel, sdist and npm
+   tarball attached. The shim job only runs for the `v1.2.0` tag.
 4. After a release, close any issues it resolves with a note pointing at the release.
    The repository was `mkdocs-asyncapi-tag-plugin`, then `asyncapi-tag`, and is now `asyncapi-viewer`;
    GitHub redirects the old URLs.

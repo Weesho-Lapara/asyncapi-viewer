@@ -2,7 +2,7 @@
 
 The viewer is the standalone bundle of ``@asyncapi/react-component``. The
 version, URLs and Subresource Integrity hashes below are updated together
-with ``scripts/update_viewer.py``; do not edit them by hand.
+for the legacy renderer; they are frozen with 1.x and no longer re-pinned.
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Dict, Optional
 
-# --- managed by scripts/update_viewer.py ------------------------------------
+# --- legacy renderer: the last pinned @asyncapi/react-component (frozen) -------
 VIEWER_VERSION = "3.2.1"
 VIEWER_JS_URL = "https://unpkg.com/@asyncapi/react-component@3.2.1/browser/standalone/index.js"
 VIEWER_JS_INTEGRITY = "sha384-wy5bSOazlkSKMGH7XMW6+pK8ho8+rCPr7mTqKdAb/dvfwXAPWCFivgr3C7wJMFAh"

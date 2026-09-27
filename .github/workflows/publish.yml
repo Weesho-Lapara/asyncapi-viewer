@@ -1,12 +1,17 @@
-# Publishes to PyPI with trusted publishing (no API tokens) whenever a version
-# tag is pushed, then creates the GitHub release with the matching CHANGELOG
-# section as notes:
-#   git tag v1.2.3 && git push origin v1.2.3
+# Publishes one version to npm (the viewer, `asyncapi-viewer`) and to PyPI (the Python
+# package, which ships that same viewer) whenever a version tag is pushed, then creates
+# the GitHub release with the matching CHANGELOG section as notes:
+#   python scripts/set_version.py 2.0.0   # both package versions, committed beforehand
+#   git tag v2.0.0 && git push origin v2.0.0
 #
-# One-time setup on PyPI for EACH project (asyncapi-viewer and the
-# deprecated asyncapi-tag shim): Manage project -> Publishing -> Add a GitHub
-# publisher with owner Weesho-Lapara, repository asyncapi-viewer, workflow
-# publish.yml, environment pypi. (Already done for both.)
+# Both registries use trusted publishing (OIDC, no stored tokens). One-time setup:
+# - PyPI, for asyncapi-viewer and the deprecated asyncapi-tag shim: Manage project ->
+#   Publishing -> GitHub publisher with owner Weesho-Lapara, repository asyncapi-viewer,
+#   workflow publish.yml, environment pypi. (Done for both.)
+# - npm, for asyncapi-viewer: package settings -> Publishing access -> Trusted publisher:
+#   GitHub Actions, organisation Weesho-Lapara, repository asyncapi-viewer, workflow
+#   publish.yml, environment npm. The first publish creates the package.
+# npm goes first: the Python package's CDN option points at the npm copy of the same version.
 name: Publish
 
 on:
@@ -24,17 +29,65 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-      - run: python -m pip install --upgrade pip build twine
-      - run: python -m build --outdir dist/asyncapi-viewer
-      - run: python -m build --outdir dist/asyncapi-tag legacy/asyncapi-tag
-      - run: python -m twine check dist/*/*
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          registry-url: https://registry.npmjs.org
+          cache: npm
+          cache-dependency-path: viewer/package-lock.json
+      - name: The tag names the version both packages carry
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          python scripts/set_version.py --check
+          test "$(python -c 'import re,pathlib; print(re.search(r"__version__ = \"([^\"]+)\"", pathlib.Path("src/asyncapi_viewer/__init__.py").read_text()).group(1))')" = "$version" || { echo "tag $GITHUB_REF_NAME does not match __version__"; exit 1; }
+          grep -q "^## asyncapi-viewer $version (" CHANGELOG.md || { echo "CHANGELOG.md has no dated section for $version"; exit 1; }
+      - name: Build the viewer (check, test, build)
+        working-directory: viewer
+        run: npm ci && npm run check && npm test && npm run build
+      - name: npm package contents
+        working-directory: viewer
+        run: |
+          npm pack --dry-run 2>&1 | tee pack.txt
+          for f in dist/asyncapi-viewer.js dist/asyncapi-viewer.iife.js theme/asyncapi-theme.css README.md; do
+            grep -q " $f" pack.txt || { echo "$f missing from the npm package"; exit 1; }
+          done
+          npm pack --pack-destination ..
+      - name: Copy the viewer into the Python package and build the distributions
+        run: |
+          python -m pip install --upgrade pip build twine
+          python scripts/sync_viewer.py --check
+          python -m build --outdir dist/asyncapi-viewer
+          python -m build --outdir dist/asyncapi-tag legacy/asyncapi-tag
+          python -m twine check dist/*/*
       - uses: actions/upload-artifact@v7
         with:
           name: distributions
-          path: dist/
+          path: |
+            dist/
+            asyncapi-viewer-*.tgz
 
-  publish-asyncapi-viewer:
+  publish-npm:
     needs: build
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          registry-url: https://registry.npmjs.org
+      - uses: actions/download-artifact@v8
+        with:
+          name: distributions
+          path: .
+      - name: Publish asyncapi-viewer to npm (trusted publishing, with provenance)
+        run: npm publish asyncapi-viewer-*.tgz --provenance --access public
+
+  publish-pypi:
+    needs: publish-npm
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
@@ -43,13 +96,13 @@ jobs:
       - uses: actions/download-artifact@v8
         with:
           name: distributions
-          path: dist/
+          path: .
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/asyncapi-viewer
 
   github-release:
-    needs: publish-asyncapi-viewer
+    needs: publish-pypi
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -58,7 +111,7 @@ jobs:
       - uses: actions/download-artifact@v8
         with:
           name: distributions
-          path: dist/
+          path: .
       - name: Extract this version's changelog section
         run: |
           version="${GITHUB_REF_NAME#v}"
@@ -69,13 +122,20 @@ jobs:
           if ! grep -q . notes.md; then
             echo "No CHANGELOG.md section for asyncapi-viewer $version" >&2; exit 1
           fi
-          { echo "Install: \`pip install asyncapi-viewer==$version\`"; echo; cat notes.md; } > release-notes.md
+          {
+            echo "Install: \`pip install asyncapi-viewer==$version\`"
+            echo "Viewer on npm: \`asyncapi-viewer@$version\` (https://cdn.jsdelivr.net/npm/asyncapi-viewer@$version/)"
+            echo
+            cat notes.md
+          } > release-notes.md
           cat release-notes.md
       - uses: softprops/action-gh-release@v3
         with:
           name: ${{ github.ref_name }}
           body_path: release-notes.md
-          files: dist/asyncapi-viewer/*
+          files: |
+            dist/asyncapi-viewer/*
+            asyncapi-viewer-*.tgz
 
   publish-legacy-shim:
     # Publishes the deprecated `asyncapi-tag` shim once, with the 1.2.0 release;
@@ -90,7 +150,7 @@ jobs:
       - uses: actions/download-artifact@v8
         with:
           name: distributions
-          path: dist/
+          path: .
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/asyncapi-tag

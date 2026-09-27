@@ -57,6 +57,13 @@ jobs:
         run: npm run build
       - name: Both bundles exist
         run: test -s dist/asyncapi-viewer.js && test -s dist/asyncapi-viewer.iife.js
+      - name: npm package contents and one shared version
+        run: |
+          npm pack --dry-run 2>&1 | tee pack.txt
+          for f in dist/asyncapi-viewer.js dist/asyncapi-viewer.iife.js theme/asyncapi-theme.css README.md; do
+            grep -q " $f" pack.txt || { echo "$f missing from the npm package"; exit 1; }
+          done
+          python3 ../scripts/set_version.py --check
 
   viewer-e2e:
     name: "Viewer (Playwright: accessibility, CSP, Python-Markdown page, instant navigation, screenshots)"
