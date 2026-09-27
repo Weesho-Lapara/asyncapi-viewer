@@ -17,13 +17,24 @@ asyncapi-viewer {
 }
 */
 
+/* Fonts. The defaults are the typefaces Swagger UI uses, so both viewers look alike on one
+   site, but the viewer never loads web fonts itself (CSP, privacy, offline builds): without
+   them on the page the system fallbacks apply. To get the design fonts, load them once in the
+   page, for example from Google Fonts:
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600&family=Titillium+Web:wght@600&family=Source+Code+Pro:wght@400;500&display=swap">
+
+   (MkDocs: extra_css or the theme's font settings; a self-hosted @font-face works the same.) */
+
 /* Advanced variables, all optional. Values shown are the defaults.
 asyncapi-viewer {
   --asyncapi-send: var(--asyncapi-primary);       send and request badges
   --asyncapi-receive: var(--asyncapi-secondary);  receive and reply badges
-  --asyncapi-font-heading: ui-sans-serif, system-ui, sans-serif;
-  --asyncapi-font-body: ui-sans-serif, system-ui, sans-serif;
-  --asyncapi-font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --asyncapi-font-heading: 'Titillium Web', ui-sans-serif, system-ui, sans-serif;
+  --asyncapi-font-body: 'Open Sans', ui-sans-serif, system-ui, sans-serif;
+  --asyncapi-font-mono: 'Source Code Pro', ui-monospace, SFMono-Regular, Menlo, monospace;
   --asyncapi-radius: 10px;
   --asyncapi-example-width: 452px;                 clamped between 360px and 560px
   --asyncapi-example-bg: #12141A;                  the example panel, both themes

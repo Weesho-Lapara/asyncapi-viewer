@@ -92,6 +92,12 @@ These override the imported spec where they differ:
    header shows "n selected · Clear selection"; the live region and the empty state are the ones
    search uses. Server and message tags render as chips on their cards, and the
    document tags lead the Info facts. Decided 2026-09-27.
+18. **Typefaces follow Swagger UI** (overrides spec section 4.2's design fonts): the default
+   stacks are Titillium Web for headings, Open Sans for body text and Source Code Pro for code,
+   each falling back to the system stack, so a site that documents REST with Swagger UI and
+   events with this viewer reads as one. The viewer still never loads fonts itself; the theme
+   file shows the Google Fonts `<link>` (or a self-hosted `@font-face`) a page adds to opt in,
+   and the demo bench loads them. Decided 2026-09-27.
 
 ### Work plan in session-sized chunks
 

@@ -34,9 +34,11 @@ export const tokens = css`
     --_ex-heading: #f4f5f7;
     --_ex-number: #b7c4e8;
 
-    --_font-heading: var(--asyncapi-font-heading, ui-sans-serif, system-ui, sans-serif);
-    --_font-body: var(--asyncapi-font-body, ui-sans-serif, system-ui, sans-serif);
-    --_font-mono: var(--asyncapi-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+    /* Swagger UI's typefaces (amendment 18), falling back to system stacks: the viewer never
+       loads web fonts itself, the page does (see theme/asyncapi-theme.css). */
+    --_font-heading: var(--asyncapi-font-heading, 'Titillium Web', ui-sans-serif, system-ui, sans-serif);
+    --_font-body: var(--asyncapi-font-body, 'Open Sans', ui-sans-serif, system-ui, sans-serif);
+    --_font-mono: var(--asyncapi-font-mono, 'Source Code Pro', ui-monospace, SFMono-Regular, Menlo, monospace);
     --_radius: var(--asyncapi-radius, 10px);
     --_radius-sm: calc(var(--_radius) - 3px);
     --_example-width: clamp(360px, var(--asyncapi-example-width, 452px), 560px);
