@@ -20,16 +20,59 @@ This site is built with the plugin. See the [live demo](demo.md).
 pip install asyncapi-viewer
 ```
 
-## MkDocs quick start
+## Tool support
 
-```yaml title="mkdocs.yml"
-plugins:
-  - asyncapi-viewer
-```
+`asyncapi-viewer` works wherever Python-Markdown runs. The element and the fence are the same in
+every host; what differs is one line of setup.
 
-Put your AsyncAPI file anywhere under `docs/` and reference it from a page. Paths are relative to the
-Markdown file, or relative to `docs/` when they start with `/`. Absolute `http(s)://` URLs pass
-through unchanged.
+=== "MkDocs"
+
+    The bundled plugin resolves paths per page, serves the viewer from the built site with
+    integrity hashes, indexes local documents for the site search, and turns a missing document or
+    an invalid attribute into a MkDocs warning, so `mkdocs build --strict` fails instead of shipping
+    a blank viewer.
+
+    ```yaml title="mkdocs.yml"
+    plugins:
+      - asyncapi-viewer
+    ```
+
+=== "Zensical"
+
+    [Zensical](https://zensical.org/) reads `mkdocs.yml` but runs no plugins, so the extension does
+    the work on its own: it finds `docs/`, keeps a copy of the viewer under it and links it with
+    paths Zensical rewrites per page, indexes local documents and warns when one is missing. Put the
+    viewer under `docs/` once, then list the extension.
+
+    ```sh
+    python -m asyncapi_viewer copy-assets docs/assets/asyncapi-viewer
+    ```
+
+    ```yaml title="mkdocs.yml"
+    markdown_extensions:
+      - asyncapi_viewer
+    ```
+
+    One `mkdocs.yml` can list both the plugin and the extension and build under either tool. This
+    site does, and a Zensical build runs in its CI. Details in [Other tools](other-tools.md#zensical).
+
+=== "Any Python-Markdown"
+
+    Every other tool built on Python-Markdown, or your own script:
+
+    ```python
+    import markdown
+
+    html = markdown.markdown(text, extensions=["asyncapi_viewer"])
+    ```
+
+    Without a docs directory the viewer loads from jsDelivr at the packaged version, with integrity
+    hashes; with one it is served from there. Options such as `docs_dir`, `url_resolver` and
+    `search_fallback` are in [Other tools](other-tools.md#plain-python-markdown).
+
+Then put your AsyncAPI file next to your pages and reference it. Paths are relative to the
+Markdown file, or relative to the docs directory when they start with `/`. Absolute `http(s)://`
+URLs pass through unchanged.
 
 ```markdown title="docs/api/events.md"
 # Events API
@@ -46,12 +89,10 @@ sidebar: true
 ```
 ````
 
-A missing document or an invalid attribute is a MkDocs warning, so `mkdocs build --strict` fails
-instead of shipping a blank viewer.
-
 ## What you get
 
 - **One element or one fence, any document.** JSON or YAML, AsyncAPI 2.x or 3.x, local file or URL.
+- **Any host.** MkDocs with the plugin, Zensical with the extension alone, or plain Python-Markdown.
 - **A viewer made for docs sites.** Operations with payload trees and example panels, servers,
   messages and schemas, a searchable sidebar with tag filters, light and dark themes that follow
   the page, and a container-based layout that never spills out of the column.
@@ -71,7 +112,7 @@ instead of shipping a blank viewer.
 - [Attributes](attributes.md) is the full reference.
 - [Configuration](configuration.md) covers plugin options, self-hosting, the CDN option and Content Security Policy.
 - [Customising](customising.md) is about colours, fonts and the theme file.
-- [Other tools](other-tools.md) covers Zensical, plain Python-Markdown and Material's instant navigation.
+- [Other tools](other-tools.md) has the details for Zensical, plain Python-Markdown and Material's instant navigation.
 - [Migration](migration.md) is for users of 1.x and of the older names `asyncapi-tag` and `mkdocs-asyncapi-tag-plugin`.
 
 ---
