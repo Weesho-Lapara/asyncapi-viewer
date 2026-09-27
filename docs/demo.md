@@ -1,7 +1,5 @@
 # Live demo
 
-## AsyncAPI document
-
 Select the spec you want to view.
 
 <select id="demo-spec" class="demo-select" aria-label="AsyncAPI document">
