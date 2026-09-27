@@ -16,6 +16,8 @@ copyright: MIT licensed. Made by <a href="https://weesholapara.com" target="_bla
 
 nav:
   - Overview: index.md
+  - Getting started: getting-started.md
+  - Web pages and React: web.md
   - Live demo: demo.md
   - Attributes: attributes.md
   - Configuration: configuration.md
@@ -54,6 +56,7 @@ markdown_extensions:
   - asyncapi_viewer
   - admonition
   - attr_list
+  - md_in_html
   - tables
   - toc:
       permalink: true

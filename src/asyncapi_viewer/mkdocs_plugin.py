@@ -116,13 +116,20 @@ class AsyncAPIPlugin(BasePlugin[AsyncAPIPluginConfig]):
         return config
 
     def on_files(self, files: Files, config: MkDocsConfig) -> Files:
-        """Add the packaged viewer files to the site under assets/asyncapi-viewer/."""
+        """Add the packaged viewer files to the site under assets/asyncapi-viewer/.
+
+        The plugin owns that path: a file already under docs/ there (typically the copy the
+        extension keeps for Zensical builds of the same site, possibly from an older version) is
+        replaced, because the integrity attributes describe the packaged files. A customised copy
+        belongs elsewhere, with viewer_js and viewer_theme pointing at it.
+        """
         if not self._serves_viewer():
             return files
         for name in assets.VIEWER_FILES:
             uri = f"{assets.SITE_ASSET_DIR}/{name}"
-            if files.get_file_from_path(uri) is not None:
-                continue
+            existing = files.get_file_from_path(uri)
+            if existing is not None:
+                files.remove(existing)
             if hasattr(File, "generated"):  # MkDocs 1.6+
                 files.append(File.generated(config, uri, content=assets.static_path(name).read_bytes()))
             else:  # MkDocs 1.5: a File whose source lives in the package

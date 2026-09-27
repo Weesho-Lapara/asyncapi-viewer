@@ -225,6 +225,21 @@ def test_default_renderer_serves_the_packaged_viewer_from_the_site(tmp_path):
     assert 'href="../../assets/asyncapi-viewer/asyncapi-theme.css"' in nested
 
 
+def test_packaged_viewer_replaces_a_stale_copy_under_docs(tmp_path):
+    """The Zensical copy of the viewer lives under docs/; MkDocs must still serve the packaged files."""
+    if not assets.packaged():
+        pytest.skip("viewer not packaged (build it and run scripts/sync_viewer.py)")
+    stale = {f"assets/asyncapi-viewer/{name}": "/* an older viewer */\n" for name in assets.VIEWER_FILES}
+    cfg = write_site(
+        tmp_path,
+        "site_name: Demo\nplugins:\n  - asyncapi-viewer\n",
+        {"schema.json": MINIMAL_SCHEMA, "index.md": '<asyncapi-viewer src="schema.json"/>\n', **stale},
+    )
+    site = build_site(cfg)
+    for name in assets.VIEWER_FILES:
+        assert (site / "assets/asyncapi-viewer" / name).read_bytes() == assets.static_path(name).read_bytes()
+
+
 def test_custom_viewer_urls_replace_the_served_copy(tmp_path):
     cfg = write_site(
         tmp_path,

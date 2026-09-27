@@ -130,6 +130,10 @@ describe('strings, src, id, deprecated and unknown attributes', () => {
     const { warnings } = parse({ bogus: '1', class: 'wide', 'data-x': '1', 'aria-label': 'y', style: '', hidden: null });
     expect(warnings).toEqual(["<asyncapi-viewer>: unknown attribute 'bogus' was ignored."]);
   });
+  it('the resolved-theme attribute the element reflects onto itself is silent', () => {
+    const { warnings } = parse({ src: 'a.yaml', 'resolved-theme': 'dark' });
+    expect(warnings).toEqual([]);
+  });
   it('one bad value does not stop the others', () => {
     const { options, warnings } = parse({ sidebar: 'maybe', info: 'no', 'send-label': 'EMIT' });
     expect(options).toMatchObject({ sidebar: false, info: false, sendLabel: 'EMIT' });

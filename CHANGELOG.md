@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+- The viewer no longer logs "unknown attribute 'resolved-theme' was ignored" for the attribute it
+  sets on itself to reflect the theme.
+- The MkDocs plugin now serves the packaged viewer even when `docs/assets/asyncapi-viewer/` holds
+  an older copy (the one the extension keeps for Zensical builds of the same site). Before, MkDocs
+  published the stale files under the packaged files' integrity hashes and browsers blocked them.
+
+### Documentation
+- New pages: Getting started, and Web pages and React (npm, script tag, React and TypeScript,
+  events, Next.js, other frameworks). The overview presents both packages and has screenshots,
+  also on Customising; `viewer/scripts/docs-screenshots.ts` regenerates them. The demo adds Adeo's
+  Kafka request/reply document with remote Avro schemas and the Streetlights example. The README
+  is shorter and points to the site.
+
 ## asyncapi-viewer 2.1.0 (2026-09-27)
 
 ### Fixed

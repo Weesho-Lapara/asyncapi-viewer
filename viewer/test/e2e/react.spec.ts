@@ -17,6 +17,8 @@ function collectErrors(page: Page): string[] {
   page.on('console', (m) => {
     // The missing document's 404 is expected; Chromium's message carries the URL only in the location.
     if (m.type() === 'error' && !m.location().url.includes('nope.yaml')) errors.push(m.text());
+    // The viewer's own warnings (unknown attributes, bad values) must not fire for what React renders.
+    if (m.type() === 'warning' && m.text().startsWith('<asyncapi-viewer>')) errors.push(m.text());
   });
   return errors;
 }

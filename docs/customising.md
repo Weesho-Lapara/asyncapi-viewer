@@ -13,6 +13,11 @@ asyncapi-viewer {
 }
 ```
 
+With the demo's two accents and a squarer radius, three lines of CSS (shown below):
+
+![The viewer with teal and rose accents and square corners](assets/screenshots/customised-light.png#only-light)
+![The viewer with teal and rose accents and square corners](assets/screenshots/customised-dark.png#only-dark)
+
 ## Where to put overrides
 
 Any stylesheet loaded after the theme file works, so under MkDocs an `extra_css` file is the usual

@@ -74,6 +74,9 @@ const HTML_GLOBAL = new Set([
   'class', 'style', 'slot', 'hidden', 'title', 'lang', 'dir', 'role', 'tabindex', 'part', 'exportparts', 'translate', 'nonce',
 ]);
 
+/** Attributes the element sets on itself (the resolved theme): never options, never warned about. */
+const OWN = new Set(['resolved-theme']);
+
 /** Canonical option name from any accepted spelling: `sendLabel`, `send-label`, `sendlabel`, `SEND-LABEL`. */
 const BY_KEY = new Map(OPTION_SPECS.map((o) => [o.name.toLowerCase(), o]));
 export function lookupOption(attribute: string): OptionSpec | undefined {
@@ -101,7 +104,7 @@ export function parseOptions(
   const slot = out as unknown as Record<string, unknown>;
   for (const [rawName, raw] of attrs) {
     const name = rawName.toLowerCase();
-    if (HTML_GLOBAL.has(name) || name.startsWith('data-') || name.startsWith('aria-') || name.startsWith('on')) continue;
+    if (HTML_GLOBAL.has(name) || OWN.has(name) || name.startsWith('data-') || name.startsWith('aria-') || name.startsWith('on')) continue;
     const spec = lookupOption(name);
     if (!spec) {
       warn(`${PREFIX} unknown attribute '${rawName}' was ignored.`);

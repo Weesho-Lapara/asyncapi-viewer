@@ -51,7 +51,9 @@ scripts/sync_viewer.py               copies the built viewer, theme, manifest an
 prototypes/docusaurus/               unpublished proof of concept, see ROADMAP.md
 tests/                               pytest; test_mkdocs_plugin.py builds real sites in tmp_path
 docs/ + mkdocs.yml                   documentation site, built with the plugin (Material theme);
-                                     docs/examples/ holds the AsyncAPI 2 and 3 demo documents
+                                     docs/examples/ holds the demo documents (two of our own, two
+                                     copied from asyncapi/spec); docs/assets/screenshots/ is
+                                     written by viewer/scripts/docs-screenshots.ts
 .github/workflows/ci.yml             tests on Python 3.9-3.14, viewer build, lint, tests and Playwright,
                                      strict docs build under MkDocs and Zensical, both distributions
 .github/workflows/docs.yml           deploys the docs site to GitHub Pages on push to main
@@ -80,6 +82,7 @@ python viewer/test/e2e/markdown/render.py         # before npm run e2e: the plai
 python viewer/test/e2e/mkdocs/build.py            # before npm run e2e: the instant-navigation fixture site
 node viewer/test/e2e/react/build.mjs              # before npm run e2e: the React app (after npm run build)
 python -m asyncapi_viewer copy-assets DIR          # viewer files plus SRI hashes for hosts without plugin hooks
+cd viewer && npx tsx scripts/docs-screenshots.ts  # docs/assets/screenshots/ (light and dark), after npm run build
 cd viewer && npm run sync-examples       # refresh demo/spec-examples/ (spec corpus copy) after npm run coverage
 python scripts/sync_viewer.py            # copy the built viewer, theme, manifest and schema into the package
 ```
