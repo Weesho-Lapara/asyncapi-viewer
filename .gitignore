@@ -16,8 +16,9 @@ htmlcov/
 .ruff_cache/
 .mypy_cache/
 
-# MkDocs
+# MkDocs and Zensical (Zensical keeps a render cache in .cache/ and does not clean site/)
 site/
+.cache/
 
 # Credentials
 .pypirc
@@ -34,3 +35,19 @@ scratch/
 
 # Docs site build output (any --site-dir name used in CI)
 site-*/
+# Viewer files the bare extension publishes under docs/ for the Zensical build of the docs
+docs/assets/asyncapi-viewer/
+
+# Viewer (Node project under viewer/); built files are copied into the wheel at build time
+viewer/node_modules/
+viewer/dist/
+viewer/test/coverage/corpus/
+viewer/test/coverage/corpus-v2/
+viewer/test/e2e/.results/
+viewer/test/e2e/screenshots/
+viewer/playwright-report/
+viewer/test/e2e/markdown/index.html
+viewer/test/e2e/mkdocs/site/
+viewer/test/e2e/mkdocs/docs/examples/
+src/asyncapi_viewer/static/
+src/asyncapi_viewer/options.schema.json

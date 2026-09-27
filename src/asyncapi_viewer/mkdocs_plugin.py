@@ -14,6 +14,7 @@ relative to the Markdown file, and relative to ``docs_dir`` when it starts with
 from __future__ import annotations
 
 import posixpath
+from pathlib import Path
 from typing import Optional
 from urllib.parse import urlsplit, urlunsplit
 
@@ -21,7 +22,7 @@ from mkdocs.config import config_options
 from mkdocs.config.base import Config
 from mkdocs.config.defaults import MkDocsConfig
 from mkdocs.plugins import BasePlugin, get_plugin_logger
-from mkdocs.structure.files import Files
+from mkdocs.structure.files import File, Files
 from mkdocs.structure.pages import Page
 from mkdocs.utils import get_relative_url
 
@@ -45,12 +46,16 @@ def _docs_relative(url: str) -> str:
 
 
 class AsyncAPIPluginConfig(Config):
-    viewer_js = config_options.Type(str, default=assets.VIEWER_JS_URL)
-    viewer_js_integrity = config_options.Type(str, default=assets.VIEWER_JS_INTEGRITY)
-    viewer_css = config_options.Type(str, default=assets.VIEWER_CSS_URL)
-    viewer_css_integrity = config_options.Type(str, default=assets.VIEWER_CSS_INTEGRITY)
+    renderer = config_options.Choice(("viewer", "legacy"), default="viewer")
+    viewer_js = config_options.Type(str, default="auto")
+    viewer_js_integrity = config_options.Type(str, default="auto")
+    viewer_theme = config_options.Type(str, default="auto")
+    viewer_theme_integrity = config_options.Type(str, default="auto")
+    viewer_css = config_options.Type(str, default="auto")
+    viewer_css_integrity = config_options.Type(str, default="auto")
     load_assets = config_options.Type(bool, default=True)
     embed_css = config_options.Type(bool, default=True)
+    search_fallback = config_options.Type(bool, default=True)
     asyncapi_file = config_options.Deprecated(
         message=(
             "The '{}' option is no longer used: MkDocs copies every non-Markdown "
@@ -64,6 +69,12 @@ class AsyncAPIPlugin(BasePlugin[AsyncAPIPluginConfig]):
         self._page: Optional[Page] = None
         self._files: Optional[Files] = None
 
+    def _serves_viewer(self) -> bool:
+        """Default for the new renderer: publish the packaged viewer into the site."""
+        return self.config.renderer == "viewer" and assets.packaged() and (
+            self.config.viewer_js == "auto" or self.config.viewer_theme == "auto"
+        )
+
     def on_config(self, config: MkDocsConfig) -> MkDocsConfig:
         listed = [n for n in EXTENSION_ALIASES if n in config["markdown_extensions"]]
         name = listed[0] if listed else EXTENSION_NAME
@@ -71,17 +82,57 @@ class AsyncAPIPlugin(BasePlugin[AsyncAPIPluginConfig]):
             config["markdown_extensions"].append(name)
         if config["mdx_configs"] is None:
             config["mdx_configs"] = {}
+
+        def asset(value: str) -> str:
+            return value if value == "auto" else _docs_relative(value)
+
+        viewer_js, js_integrity = asset(self.config.viewer_js), self.config.viewer_js_integrity
+        viewer_theme, theme_integrity = asset(self.config.viewer_theme), self.config.viewer_theme_integrity
+        if self._serves_viewer():
+            if self.config.viewer_js == "auto":
+                viewer_js = f"/{assets.SITE_ASSET_DIR}/{assets.VIEWER_MODULE}"
+                if js_integrity == "auto":
+                    js_integrity = assets.integrity(assets.VIEWER_MODULE)
+            if self.config.viewer_theme == "auto" and self.config.viewer_css == "auto":
+                viewer_theme = f"/{assets.SITE_ASSET_DIR}/{assets.VIEWER_THEME}"
+                if theme_integrity == "auto":
+                    theme_integrity = assets.integrity(assets.VIEWER_THEME)
+
         config["mdx_configs"][name] = {
-            "viewer_js": _docs_relative(self.config.viewer_js),
-            "viewer_js_integrity": self.config.viewer_js_integrity,
-            "viewer_css": _docs_relative(self.config.viewer_css),
+            "renderer": self.config.renderer,
+            "viewer_js": viewer_js,
+            "viewer_js_integrity": js_integrity,
+            "viewer_theme": viewer_theme,
+            "viewer_theme_integrity": theme_integrity,
+            "viewer_css": asset(self.config.viewer_css),
             "viewer_css_integrity": self.config.viewer_css_integrity,
             "load_assets": self.config.load_assets,
             "embed_css": self.config.embed_css,
+            "search_fallback": self.config.search_fallback,
             "url_resolver": self.resolve_url,
+            "file_resolver": self.resolve_file,
             "warn": log.warning,
         }
         return config
+
+    def on_files(self, files: Files, config: MkDocsConfig) -> Files:
+        """Add the packaged viewer files to the site under assets/asyncapi-viewer/."""
+        if not self._serves_viewer():
+            return files
+        for name in assets.VIEWER_FILES:
+            uri = f"{assets.SITE_ASSET_DIR}/{name}"
+            if files.get_file_from_path(uri) is not None:
+                continue
+            if hasattr(File, "generated"):  # MkDocs 1.6+
+                files.append(File.generated(config, uri, content=assets.static_path(name).read_bytes()))
+            else:  # MkDocs 1.5: a File whose source lives in the package
+                f = File(name, str(assets.STATIC_DIR), config["site_dir"], config["use_directory_urls"])
+                f.src_uri = uri
+                f.dest_uri = uri
+                f.url = uri
+                f.abs_dest_path = str(Path(config["site_dir"]) / uri)
+                files.append(f)
+        return files
 
     def on_page_markdown(
         self, markdown: str, page: Page, config: MkDocsConfig, files: Files
@@ -92,19 +143,37 @@ class AsyncAPIPlugin(BasePlugin[AsyncAPIPluginConfig]):
         self._files = files
         return markdown
 
-    def resolve_url(self, url: str) -> str:
-        """Turn a src attribute into a URL relative to the current page."""
+    def _target(self, url: str) -> "tuple[str, Optional[File]] | None":
+        """The docs-relative path a local src points at, and its File when MkDocs knows it."""
         page, files = self._page, self._files
         if page is None or files is None:
-            return url
+            return None
         scheme, netloc, path, query, fragment = urlsplit(url)
         if scheme or netloc or not path:
-            return url
+            return None
         if path.startswith("/"):
             target = posixpath.normpath(path.lstrip("/"))
         else:
             target = posixpath.normpath(posixpath.join(posixpath.dirname(page.file.src_uri), path))
-        target_file = files.get_file_from_path(target)
+        return target, files.get_file_from_path(target)
+
+    def resolve_file(self, url: str) -> Optional[str]:
+        """The on-disk path of a local src for the search fallback; None for URLs and unknown files."""
+        found = self._target(url)
+        if found is None or found[1] is None:
+            return None
+        path = found[1].abs_src_path
+        return path if path and Path(path).is_file() else None
+
+    def resolve_url(self, url: str) -> str:
+        """Turn a src attribute into a URL relative to the current page."""
+        found = self._target(url)
+        if found is None:
+            return url
+        page = self._page
+        assert page is not None
+        target, target_file = found
+        _, _, _, query, fragment = urlsplit(url)
         if target_file is None:
             log.warning(
                 f"Doc file '{page.file.src_uri}' references AsyncAPI document '{url}', "

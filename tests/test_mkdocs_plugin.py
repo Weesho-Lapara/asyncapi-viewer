@@ -30,7 +30,8 @@ def build_site(config_file: Path, strict: bool = True) -> Path:
     return Path(cfg["site_dir"])
 
 
-BASIC_YML = "site_name: Demo\nplugins:\n  - asyncapi-viewer\n"
+# The plugin tests describe the 1.x output; the new renderer is covered in test_viewer_renderer.py.
+BASIC_YML = "site_name: Demo\nplugins:\n  - asyncapi-viewer:\n      renderer: legacy\n"
 
 
 def src_of(html_text: str) -> list[str]:
@@ -122,7 +123,7 @@ def test_invalid_attribute_is_a_mkdocs_warning(tmp_path, caplog):
 def test_assets_once_per_page_and_plugin_options(tmp_path):
     cfg = write_site(
         tmp_path,
-        "site_name: Demo\nplugins:\n  - asyncapi-viewer:\n      viewer_js: js/viewer.js\n      viewer_js_integrity: ''\n"
+        "site_name: Demo\nplugins:\n  - asyncapi-viewer:\n      renderer: legacy\n      viewer_js: js/viewer.js\n      viewer_js_integrity: ''\n"
         "      viewer_css: https://cdn.example.com/viewer.css\n      viewer_css_integrity: 'sha384-abc'\n",
         {
             "schema.json": MINIMAL_SCHEMA,
@@ -143,7 +144,7 @@ def test_assets_once_per_page_and_plugin_options(tmp_path):
 def test_load_assets_false(tmp_path):
     cfg = write_site(
         tmp_path,
-        "site_name: Demo\nplugins:\n  - asyncapi-viewer:\n      load_assets: false\n      embed_css: false\n",
+        "site_name: Demo\nplugins:\n  - asyncapi-viewer:\n      renderer: legacy\n      load_assets: false\n      embed_css: false\n",
         {"schema.json": MINIMAL_SCHEMA, "index.md": '<asyncapi-viewer src="schema.json"/>\n'},
     )
     index = (build_site(cfg) / "index.html").read_text()
@@ -162,7 +163,7 @@ def test_default_assets_are_pinned_with_integrity(tmp_path):
 def test_deprecated_asyncapi_file_option_warns_but_works(tmp_path, caplog):
     cfg = write_site(
         tmp_path,
-        "site_name: Demo\nplugins:\n  - asyncapi-viewer:\n      asyncapi_file: schema.json\n",
+        "site_name: Demo\nplugins:\n  - asyncapi-viewer:\n      renderer: legacy\n      asyncapi_file: schema.json\n",
         {"schema.json": MINIMAL_SCHEMA, "index.md": '<asyncapi-viewer src="schema.json"/>\n'},
     )
     with caplog.at_level(logging.WARNING, logger="mkdocs"):
@@ -184,10 +185,55 @@ def test_user_listed_extension_is_not_duplicated(tmp_path):
 def test_old_plugin_id_and_extension_name_still_work(tmp_path):
     cfg = write_site(
         tmp_path,
-        "site_name: Demo\nplugins:\n  - asyncapi-tag\nmarkdown_extensions:\n  - asyncapi_tag\n",
+        "site_name: Demo\nplugins:\n  - asyncapi-tag:\n      renderer: legacy\nmarkdown_extensions:\n  - asyncapi_tag:\n      renderer: legacy\n",
         {"schema.json": MINIMAL_SCHEMA, "api/page.md": '<asyncapi-tag src="../schema.json"/>\n'},
     )
     site = build_site(cfg)
     page = (site / "api/page/index.html").read_text()
     assert page.count('class="asyncapi-viewer asyncapi-tag"') == 1
     assert src_of(page) == ["../../schema.json"]  # the plugin's resolver was wired to the old extension name
+
+
+# --- the new renderer: viewer served from the site ---------------------------------------------
+
+def test_default_renderer_serves_the_packaged_viewer_from_the_site(tmp_path):
+    if not assets.packaged():
+        pytest.skip("viewer not packaged (build it and run scripts/sync_viewer.py)")
+    cfg = write_site(
+        tmp_path,
+        "site_name: Demo\nplugins:\n  - asyncapi-viewer\n",
+        {
+            "schema.json": MINIMAL_SCHEMA,
+            "index.md": '<asyncapi-viewer src="schema.json"/>\n\n<asyncapi-viewer src="schema.json" sidebar="true"/>\n',
+            "api/page.md": '<asyncapi-viewer src="../schema.json"/>\n',
+        },
+    )
+    site = build_site(cfg)
+    for name in assets.VIEWER_FILES:
+        assert (site / "assets/asyncapi-viewer" / name).read_bytes() == assets.static_path(name).read_bytes()
+    index = (site / "index.html").read_text()
+    assert index.count("<asyncapi-viewer ") == 2
+    assert 'id="asyncapi-viewer-2" src="schema.json" sidebar>' in index
+    assert index.count(f'<script type="module" src="assets/asyncapi-viewer/asyncapi-viewer.js" integrity="{assets.integrity("asyncapi-viewer.js")}" crossorigin="anonymous"></script>') == 1
+    assert f'<link rel="stylesheet" href="assets/asyncapi-viewer/asyncapi-theme.css" integrity="{assets.integrity("asyncapi-theme.css")}" crossorigin="anonymous">' in index
+    assert "querySelectorAll" not in index and "data-asyncapi-src" not in index and "data-asyncapi-config" not in index
+    # search fallback (chunk 2.3): the local document was read and indexed inside each element
+    assert index.count("<ul data-asyncapi-fallback hidden><li>subscribe user/signedup <span>user/signedup</span>") == 2
+    nested = (site / "api/page/index.html").read_text()
+    assert "<ul data-asyncapi-fallback hidden>" in nested  # resolved relative to the nested page
+    assert 'src="../../assets/asyncapi-viewer/asyncapi-viewer.js"' in nested
+    assert 'href="../../assets/asyncapi-viewer/asyncapi-theme.css"' in nested
+
+
+def test_custom_viewer_urls_replace_the_served_copy(tmp_path):
+    cfg = write_site(
+        tmp_path,
+        "site_name: Demo\nplugins:\n  - asyncapi-viewer:\n      viewer_js: https://cdn.example.com/viewer.js\n"
+        "      viewer_js_integrity: sha384-abc\n      viewer_theme: css/my-theme.css\n      viewer_theme_integrity: ''\n",
+        {"schema.json": MINIMAL_SCHEMA, "css/my-theme.css": "asyncapi-viewer{}", "index.md": '<asyncapi-viewer src="schema.json"/>\n'},
+    )
+    site = build_site(cfg)
+    index = (site / "index.html").read_text()
+    assert '<script type="module" src="https://cdn.example.com/viewer.js" integrity="sha384-abc" crossorigin="anonymous"></script>' in index
+    assert '<link rel="stylesheet" href="css/my-theme.css">' in index
+    assert not (site / "assets/asyncapi-viewer").exists()

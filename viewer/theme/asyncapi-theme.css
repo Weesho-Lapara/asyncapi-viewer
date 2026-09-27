@@ -1,0 +1,53 @@
+/* asyncapi-theme.css: copy this file, change the values, load it after the viewer script.
+   Only the two accents and the optional logo are needed; everything else is derived.
+   Advanced variables (fonts, radius, example width, neutral tokens) are listed in the
+   Customising page of the documentation. */
+asyncapi-viewer {
+  --asyncapi-primary: #2944C9;                   /* send operations, links, highlights */
+  --asyncapi-secondary: #B84E1A;                 /* receive operations, required labels */
+  /* --asyncapi-logo: url("/assets/logo.svg");        optional; use a site-absolute path */
+  /* --asyncapi-logo-dark: url("/assets/logo-dark.svg"); optional */
+}
+
+/* Match a Material for MkDocs palette instead (opt-in, see ROADMAP amendment 12):
+asyncapi-viewer {
+  --asyncapi-primary: var(--md-primary-fg-color);
+  --asyncapi-font-body: var(--md-text-font-family);
+  --asyncapi-font-mono: var(--md-code-font-family);
+}
+*/
+
+/* Fonts. The defaults are the typefaces Swagger UI uses, so both viewers look alike on one
+   site, but the viewer never loads web fonts itself (CSP, privacy, offline builds): without
+   them on the page the system fallbacks apply. To get the design fonts, load them once in the
+   page, for example from Google Fonts:
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600&family=Titillium+Web:wght@600&family=Source+Code+Pro:wght@400;500&display=swap">
+
+   (MkDocs: extra_css or the theme's font settings; a self-hosted @font-face works the same.) */
+
+/* Advanced variables, all optional. Values shown are the defaults.
+asyncapi-viewer {
+  --asyncapi-send: var(--asyncapi-primary);       send and request badges
+  --asyncapi-receive: var(--asyncapi-secondary);  receive and reply badges
+  --asyncapi-font-heading: 'Titillium Web', ui-sans-serif, system-ui, sans-serif;
+  --asyncapi-font-body: 'Open Sans', ui-sans-serif, system-ui, sans-serif;
+  --asyncapi-font-mono: 'Source Code Pro', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --asyncapi-radius: 10px;
+  --asyncapi-example-width: 452px;                 clamped between 360px and 560px
+  --asyncapi-example-bg: #12141A;                  the example panel, both themes
+  --asyncapi-bg: #F6F5F1;          page background          (dark: #0F1115)
+  --asyncapi-surface: #FFFFFF;     cards, header            (dark: #161920)
+  --asyncapi-sidebar: #EFEDE7;     sidebar                  (dark: #12151A)
+  --asyncapi-head: #F8F7F3;        table and tree toolbars  (dark: #1B1F27)
+  --asyncapi-ink: #17191F;         main text                (dark: #ECEDEF)
+  --asyncapi-ink-2: #3A3E48;       secondary text           (dark: #C4C8D0)
+  --asyncapi-muted: #5E626D;       labels, meta             (dark: #959BA7)
+  --asyncapi-line: #E3E0D8;        borders                  (dark: #262A33)
+  --asyncapi-line-2: #C9C5BA;      tree guide lines         (dark: #3A404C)
+}
+Scope a value to one mode with the attribute the viewer reflects:
+asyncapi-viewer[resolved-theme="dark"] { --asyncapi-bg: #000; }
+*/

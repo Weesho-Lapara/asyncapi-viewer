@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, viewer-2]
   pull_request:
 
 permissions:
@@ -29,8 +29,81 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e ".[test]"
+      - name: Build the viewer and copy it into the package
+        run: npm --prefix viewer ci && npm --prefix viewer run build && python scripts/sync_viewer.py
       - name: Test
         run: python -m pytest
+
+  viewer:
+    name: Viewer (Node build, lint, tests)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: viewer
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: viewer/package-lock.json
+      - name: Install
+        run: npm ci
+      - name: Typecheck and lint
+        run: npm run check
+      - name: Test
+        run: npm test
+      - name: Build
+        run: npm run build
+      - name: Both bundles exist
+        run: test -s dist/asyncapi-viewer.js && test -s dist/asyncapi-viewer.iife.js
+      - name: npm package contents and one shared version
+        run: |
+          npm pack --dry-run 2>&1 | tee pack.txt
+          for f in dist/asyncapi-viewer.js dist/asyncapi-viewer.iife.js theme/asyncapi-theme.css README.md; do
+            grep -q " $f" pack.txt || { echo "$f missing from the npm package"; exit 1; }
+          done
+          python3 ../scripts/set_version.py --check
+
+  viewer-e2e:
+    name: "Viewer (Playwright: accessibility, CSP, Python-Markdown page, instant navigation, screenshots)"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: viewer
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: viewer/package-lock.json
+      - name: Install
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Install browsers
+        run: npx playwright install --with-deps chromium firefox webkit
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Render the plain Python-Markdown page and build the instant-navigation site (markdown.spec.ts, instant.spec.ts)
+        working-directory: ${{ github.workspace }}
+        run: |
+          python -m pip install -e ".[yaml,docs]"
+          python scripts/sync_viewer.py
+          python viewer/test/e2e/markdown/render.py
+          python viewer/test/e2e/mkdocs/build.py
+      - name: Playwright
+        run: npx playwright test
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: viewer-screenshots
+          path: |
+            viewer/test/e2e/screenshots/
+            viewer/playwright-report/
+          if-no-files-found: ignore
 
   docs:
     name: Docs site (strict build, MkDocs and Zensical)
@@ -41,18 +114,27 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
       - name: Install
         run: python -m pip install --upgrade pip && python -m pip install -e ".[docs]" zensical
+      - name: Build the viewer and copy it into the package
+        run: npm --prefix viewer ci && npm --prefix viewer run build && python scripts/sync_viewer.py
       - name: MkDocs strict build
         run: mkdocs build --strict --site-dir site-mkdocs
-      - name: Zensical build
-        run: zensical build
-      - name: Both outputs contain the rendered demo
+      - name: Zensical build (no plugin hooks; it lists docs/ before rendering, so the viewer is copied there first)
+        run: python -m asyncapi_viewer copy-assets docs/assets/asyncapi-viewer && zensical build
+      - name: Both outputs contain the rendered demo and serve the viewer
         run: |
           for site in site-mkdocs site; do
-            test "$(grep -o 'data-asyncapi-src="[^"]*"' "$site/demo/index.html" | wc -l)" -ge 3 || { echo "no viewer markup in $site"; exit 1; }
-            grep -q 'integrity="sha384-' "$site/demo/index.html" || { echo "no SRI attributes in $site"; exit 1; }
+            test "$(grep -o '<asyncapi-viewer [^>]*src="[^"]*"' "$site/demo/index.html" | wc -l)" -ge 4 || { echo "no viewer markup in $site"; exit 1; }
+            grep -q 'type="module" src="[^"]*assets/asyncapi-viewer/asyncapi-viewer.js"' "$site/demo/index.html" || { echo "no module script in $site"; exit 1; }
+            grep -q 'data-asyncapi-fallback' "$site/demo/index.html" || { echo "no search fallback in $site"; exit 1; }
+            test -s "$site/assets/asyncapi-viewer/asyncapi-viewer.js" || { echo "viewer not served by $site"; exit 1; }
+            test -s "$site/assets/asyncapi-viewer/asyncapi-theme.css" || { echo "theme not served by $site"; exit 1; }
           done
+          grep -q 'integrity="sha384-' site-mkdocs/demo/index.html || { echo "no SRI attributes in the MkDocs build"; exit 1; }
 
   package:
     name: Build distributions
@@ -62,14 +144,29 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
       - name: Install build tools
         run: python -m pip install --upgrade pip build twine
+      - name: Build the viewer and copy it into the package
+        run: npm --prefix viewer ci && npm --prefix viewer run build && python scripts/sync_viewer.py
       - name: Build asyncapi-viewer
         run: python -m build --outdir dist/asyncapi-viewer
       - name: Build asyncapi-tag (deprecated shim)
         run: python -m build --outdir dist/asyncapi-tag legacy/asyncapi-tag
       - name: Check metadata
         run: python -m twine check dist/*/*
+      - name: Wheel contains the viewer and the schema
+        run: |
+          python - <<'EOF'
+          import glob, zipfile
+          wheel = glob.glob("dist/asyncapi-viewer/*.whl")[0]
+          names = zipfile.ZipFile(wheel).namelist()
+          for needed in ("asyncapi_viewer/options.schema.json", "asyncapi_viewer/static/asyncapi-viewer.js", "asyncapi_viewer/static/asyncapi-viewer.iife.js", "asyncapi_viewer/static/asyncapi-theme.css", "asyncapi_viewer/static/manifest.json"):
+              assert needed in names, f"{needed} missing from {wheel}"
+          print("wheel ok:", wheel)
+          EOF
       - uses: actions/upload-artifact@v7
         with:
           name: distributions
