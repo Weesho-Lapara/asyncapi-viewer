@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased (2.0.0)
+## asyncapi-viewer 2.0.0 (2026-09-27)
 
 ### Changed
 - **A viewer of our own.** The wrapped `@asyncapi/react-component` is replaced by a web component
