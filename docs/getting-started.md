@@ -38,7 +38,7 @@ One viewer, set up for your stack. Pick your tool below; after that the element,
     Zensical rewrites per page, indexes local documents and warns when one is missing. The
     `copy-assets` step is needed once, because Zensical lists `docs/` before it renders. One
     `mkdocs.yml` can list both the plugin and the extension and build under either tool; details in
-    [Other tools](other-tools.md#zensical).
+    [Configuration](configuration.md#zensical).
 
 === "Python-Markdown"
 
@@ -55,7 +55,7 @@ One viewer, set up for your stack. Pick your tool below; after that the element,
     Any other tool built on Python-Markdown works the same way. Without a docs directory the
     viewer loads from jsDelivr at the packaged version, with integrity hashes. Options such as
     `docs_dir`, `url_resolver` and `search_fallback` are in
-    [Other tools](other-tools.md#plain-python-markdown).
+    [Configuration](configuration.md#extension-options).
 
 === "React"
 

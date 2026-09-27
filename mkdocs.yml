@@ -14,18 +14,17 @@ repo_name: Weesho-Lapara/asyncapi-viewer
 edit_uri: edit/main/docs/
 copyright: MIT licensed. Made by <a href="https://weesholapara.com" target="_blank" rel="noopener">Weesho Lapara</a>.
 
-# One top-level tab, "Docs"; its pages are listed in the left sidebar.
 nav:
-  - Docs:
-      - Overview: index.md
-      - Getting started: getting-started.md
-      - Live demo: demo.md
+  - Overview: index.md
+  - Getting started: getting-started.md
+  - Live demo: demo.md
+  - Personalisation:
       - Attributes: attributes.md
       - Configuration: configuration.md
       - Customising: customising.md
-      - Other tools: other-tools.md
-      - Migration: migration.md
+  - Changelog:
       - Changelog: changelog.md
+      - Migration: migration.md
 
 theme:
   name: material

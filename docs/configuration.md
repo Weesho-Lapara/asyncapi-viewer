@@ -19,6 +19,44 @@ under `assets/asyncapi-viewer/` (the ES module, an IIFE build and the theme) and
 page, a module script and a stylesheet link pointing at them with Subresource Integrity hashes.
 Nothing is loaded from a third-party host.
 
+## Extension options
+
+Zensical and plain Python-Markdown run the extension without the plugin. Configure it under
+`markdown_extensions` in `mkdocs.yml`, or as `extension_configs={"asyncapi_viewer": {...}}` in
+Python:
+
+| Option | Default | Description |
+|---|---|---|
+| `viewer_js`, `viewer_theme` | jsDelivr URLs of the packaged version | Where the page loads the viewer and the theme from |
+| `viewer_js_integrity`, `viewer_theme_integrity` | matching SRI hashes | Empty string omits the attribute |
+| `load_assets` | `True` | Emit the module script and the theme link with the first element on a page |
+| `docs_dir` | `auto` | The documentation directory for hosts without plugin hooks: `auto` uses `./docs` when it exists. Local documents are found under it for the search index and reported when missing, and the viewer is published under it when the two URLs are `auto`. `''` disables |
+| `assets_dir` | `assets/asyncapi-viewer` | Where under `docs_dir` the viewer is published |
+| `search_fallback` | `True` | Emit the hidden search index for local documents |
+| `file_resolver` | `docs_dir` lookup, else the working directory | Callable mapping `src` to a readable local path for the search index, or `None`; never called for URLs |
+| `url_resolver` | identity | Callable mapping `src` (and relative asset URLs) to what the browser fetches |
+| `warn` | `logging` | Callable receiving warning messages |
+| `renderer` | `viewer` | `legacy` keeps the 1.x React-based output |
+
+Without a `url_resolver`, `src` is emitted as written and the browser resolves it relative to the
+page URL; use site-root-relative or absolute URLs, or supply a resolver, when pages live in
+subdirectories. Without a docs directory the viewer loads from jsDelivr at the packaged version.
+
+### Zensical
+
+Zensical lists the files under `docs/` before it renders any page, so the viewer copy has to exist
+before the first build: run `python -m asyncapi_viewer copy-assets docs/assets/asyncapi-viewer`
+once, and commit the copy or add it to `.gitignore` and run the command in CI. From then on the
+extension keeps it fresh when the package is upgraded and links it with docs-relative paths, which
+Zensical rewrites per page like it rewrites `src`. Local documents are found under `docs/` for the
+search index (page-relative paths are matched by their unique suffix; use a `/`-prefixed path when
+two files share one), and a missing one is a build-time warning. Set `viewer_js` and
+`viewer_theme` to serve the viewer from elsewhere; the publishing step is then skipped.
+
+Listing both `plugins: [asyncapi-viewer]` and `markdown_extensions: [asyncapi_viewer]` lets one
+`mkdocs.yml` build under MkDocs and Zensical: under MkDocs the plugin takes over and serves the
+viewer from the built site. This site is built that way, and a Zensical build runs in its CI.
+
 ## Self-hosting the viewer
 
 The default already is self-hosting. Point the options elsewhere when you want a different copy,

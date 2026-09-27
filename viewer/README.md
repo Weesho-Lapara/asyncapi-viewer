@@ -25,7 +25,7 @@ element) or load `asyncapi-viewer/iife` with a plain script tag. Each load fires
 `asyncapi-load` (`detail.model`, `detail.problems`) or `asyncapi-error` (`detail.error`). Types
 ship with the package; `import type {} from 'asyncapi-viewer/react'` adds the element to React's
 JSX, with `onasyncapi-load` and `onasyncapi-error`. React and SSR notes:
-https://weesho-lapara.github.io/asyncapi-viewer/other-tools/ The theme file is optional: copy
+https://weesho-lapara.github.io/asyncapi-viewer/getting-started/ The theme file is optional: copy
 it to change the two accent colours, or set any `--asyncapi-*` custom property on the element.
 Fonts are never loaded by the component; the page opts in (see the theme file).
 
