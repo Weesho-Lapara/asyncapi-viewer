@@ -57,7 +57,7 @@ jobs:
       - name: Copy the viewer into the Python package and build the distributions
         run: |
           python -m pip install --upgrade pip build twine
-          python scripts/sync_viewer.py --check
+          python scripts/sync_viewer.py && python scripts/sync_viewer.py --check
           python -m build --outdir dist/asyncapi-viewer
           python -m build --outdir dist/asyncapi-tag legacy/asyncapi-tag
           python -m twine check dist/*/*
