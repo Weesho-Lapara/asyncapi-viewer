@@ -426,6 +426,7 @@ export class AsyncAPIViewerElement extends LitElement {
         tagsOpen: this.#tagsOpen,
         onTagsToggle: (open) => {
           this.#tagsOpen = open;
+          this.requestUpdate();
         },
         onToggleTag: (name) => {
           const next = new Set(this.#selectedTags);

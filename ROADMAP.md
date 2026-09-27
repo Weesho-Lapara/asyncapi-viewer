@@ -86,10 +86,11 @@ These override the imported spec where they differ:
    query matches tags too. A collapsible Tags block (native `<details>`, closed by default) sits
    above the operations and lists the document's declared tags first, then any other tag an
    operation carries, each with its operation count; tags no operation carries are omitted. Any
-   number can be selected (checkboxes); an operation stays when it carries at least one selected
-   tag, and the selection composes with the search box as an intersection. The summary shows
-   how many tags are selected and a Clear link resets them; the live region and the empty state
-   are the ones search uses. Server and message tags render as chips on their cards, and the
+   number can be selected (toggle rows highlighted like the current item); an operation stays
+   when it carries at least one selected tag, and the selection composes with the search box as
+   an intersection. Unlike a typed query, a tag selection keeps the section links visible. The
+   header shows "n selected · Clear selection"; the live region and the empty state are the ones
+   search uses. Server and message tags render as chips on their cards, and the
    document tags lead the Info facts. Decided 2026-09-27.
 
 ### Work plan in session-sized chunks

@@ -131,14 +131,15 @@ export interface FilteredNav {
 /**
  * The search query and the selected tags together: an operation stays when every term matches
  * and, if any tags are selected, it carries at least one of them. Section links hide while a
- * filter is active unless `keepSections`.
+ * query is typed unless `keepSections`; a tag selection alone keeps them.
  */
 export function filterNav(items: NavItem[], query: string, keepSections: boolean, selectedTags: ReadonlySet<string> = new Set()): FilteredNav {
-  const active = query.trim() !== '' || selectedTags.size > 0;
+  const querying = query.trim() !== '';
+  const active = querying || selectedTags.size > 0;
   const total = items.filter((i) => i.kind === 'operation').length;
   if (!active) return { items, shown: total, total, active };
   const tagged = (i: NavItem) => selectedTags.size === 0 || (i.tags ?? []).some((t) => selectedTags.has(t));
-  const out = items.filter((i) => (i.kind === 'operation' ? matches(i, query) && tagged(i) : keepSections));
+  const out = items.filter((i) => (i.kind === 'operation' ? matches(i, query) && tagged(i) : keepSections || !querying));
   return { items: out, shown: out.filter((i) => i.kind === 'operation').length, total, active };
 }
 

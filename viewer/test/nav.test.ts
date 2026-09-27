@@ -94,11 +94,14 @@ describe('tags facet (amendment 17)', () => {
 
   it('selected tags filter with any-of semantics and compose with the query', () => {
     const items = buildNavItems(ordersV3, ordersV3.operations, 'v', base);
+    // A tag selection alone keeps the section links; only a typed query hides them.
     const one = filterNav(items, '', false, new Set(['fulfilment']));
-    expect(one.items.map((i) => i.label)).toEqual(['onOrderShipped']);
+    expect(one.items.map((i) => i.label)).toEqual(['Orders service', 'Servers', 'onOrderShipped', 'Messages', 'Schemas']);
     expect([one.shown, one.total, one.active]).toEqual([1, 2, true]);
-    const both = filterNav(items, '', true, new Set(['orders', 'fulfilment']));
+    const both = filterNav(items, '', false, new Set(['orders', 'fulfilment']));
     expect(both.items.map((i) => i.label)).toEqual(['Orders service', 'Servers', 'emitOrderPlaced', 'onOrderShipped', 'Messages', 'Schemas']);
+    const withQuery = filterNav(items, 'shipped', false, new Set(['fulfilment']));
+    expect(withQuery.items.map((i) => i.label)).toEqual(['onOrderShipped']);
     const none = filterNav(items, 'placed', false, new Set(['fulfilment']));
     expect(none.shown).toBe(0);
     expect(filterNav(items, '', false, new Set()).active).toBe(false);

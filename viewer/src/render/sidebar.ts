@@ -162,26 +162,37 @@ export const sidebarStyles = css`
     font: 400 12px/1 var(--_font-mono);
     color: var(--_muted);
   }
-  /* Tags block: a collapsed details whose summary looks like a group heading. */
+  /* Tags block: a header row that looks like a group heading, with a disclosure button. */
   .side__tags {
     margin-top: 6px;
   }
-  .side__tags-summary {
-    cursor: pointer;
-    list-style: none;
-    padding: 6px 0;
+  .side__tags-head {
+    justify-content: flex-start;
+    align-items: center;
+    gap: 8px;
     margin-bottom: 0;
+    padding: 6px 0;
   }
-  .side__tags-summary::-webkit-details-marker {
-    display: none;
-  }
-  .side__tags-title {
+  .side__tags-toggle {
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-transform: inherit;
+    letter-spacing: inherit;
+    cursor: pointer;
+  }
+  .side__tags-toggle:focus-visible {
+    outline: 2px solid var(--_primary);
+    outline-offset: 3px;
+    border-radius: 3px;
   }
   /* The same chevron as the collapsible entries: right when closed, down when open. */
-  .side__tags-title::before {
+  .side__tags-toggle::before {
     content: '';
     width: 6px;
     height: 6px;
@@ -191,61 +202,59 @@ export const sidebarStyles = css`
     transform: rotate(-45deg);
     transition: transform 120ms;
   }
-  .side__tags[open] .side__tags-title::before {
+  .side__tags-toggle[aria-expanded='true']::before {
     transform: rotate(45deg);
     margin-bottom: 3px;
   }
-  .side__tags-summary:focus-visible {
-    outline: 2px solid var(--_primary);
-    outline-offset: 2px;
-    border-radius: 3px;
+  .side__tags-count {
+    margin-left: auto;
   }
-  .side__tags-selected {
+  .side__tag-list[hidden] {
+    display: none;
+  }
+  .side__tags-state {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     text-transform: none;
     letter-spacing: 0;
-    color: var(--_primary-text);
+    font-weight: 400;
   }
-  .side .side__tag-list {
-    padding-left: 12px;
-  }
-  .side__tag {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    align-items: center;
-    column-gap: 8px;
-    min-height: 36px;
-    padding: 2px 10px;
-    border-radius: var(--_radius-sm);
-    font-size: 13px;
-    color: var(--_ink);
-    cursor: pointer;
-  }
-  .side__tag:hover {
-    background: color-mix(in srgb, var(--_primary) 6%, transparent);
-  }
-  .side__tag input {
-    margin: 0;
-    width: 15px;
-    height: 15px;
-    accent-color: var(--_primary);
-  }
-  .side__tag:focus-within {
-    outline: 2px solid var(--_primary);
-    outline-offset: -2px;
+  .side__tags-selected {
+    color: var(--_ink-2);
   }
   .side__tags-clear {
-    margin: 4px 0 0 22px;
-    padding: 4px 0;
+    padding: 0;
     border: 0;
     background: none;
     color: var(--_primary-text);
-    font: 12px/1.4 var(--_font-body);
+    font: 500 11px/1 var(--_font-body);
     cursor: pointer;
-    text-decoration: underline;
+  }
+  .side__tags-clear:hover {
+    color: var(--_primary);
   }
   .side__tags-clear:focus-visible {
     outline: 2px solid var(--_primary);
     outline-offset: 2px;
+    border-radius: 3px;
+  }
+  .side .side__tag-list {
+    padding-left: 12px;
+  }
+  /* A tag is a toggle button that looks like a nav row; pressed = the current-item highlight. */
+  .side__tag {
+    width: 100%;
+    min-height: 40px;
+    border: 0;
+    background: none;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  .side__tag[aria-pressed='true'] {
+    background: var(--_tint);
+    font-weight: 600;
   }
   .side__empty {
     margin: 8px 10px;
@@ -404,30 +413,39 @@ export function renderSidebar(input: SidebarInput): TemplateResult {
 }
 
 /**
- * The Tags block (amendment 17): a collapsed `<details>` above the operations whose summary
- * reads like a group heading, holding one checkbox per tag with its operation count. Any
- * number can be selected; the summary shows how many are, and a Clear link resets them.
+ * The Tags block (amendment 17): a collapsible block above the operations whose header reads
+ * like a group heading: a disclosure button, then "n selected · Clear selection" once anything
+ * is selected (siblings, not nested controls), then the tag count. The list holds one toggle
+ * button per tag with its operation count; a selected tag is highlighted like the current item.
  */
 function renderTags(input: SidebarInput): TemplateResult {
   const selected = input.selectedTags.size;
-  return html`<details class="side__tags" ?open=${input.tagsOpen} @toggle=${(e: Event) => input.onTagsToggle((e.target as HTMLDetailsElement).open)}>
-    <summary class="side__group side__tags-summary">
-      <span class="side__tags-title">Tags${selected > 0 ? html` <span class="side__tags-selected">${selected} selected</span>` : nothing}</span>
-      <span class="mono">${input.tags.length}</span>
-    </summary>
-    <ul class="side__tag-list">
+  const listId = `${input.id}--tags`;
+  return html`<div class="side__tags">
+    <div class="side__group side__tags-head">
+      <button class="side__tags-toggle" type="button" aria-expanded=${input.tagsOpen ? 'true' : 'false'} aria-controls=${listId} @click=${() => input.onTagsToggle(!input.tagsOpen)}>
+        Tags
+      </button>
+      ${selected > 0
+        ? html`<span class="side__tags-state">
+            <span class="side__tags-selected">${selected} selected</span>
+            <span aria-hidden="true">·</span>
+            <button class="side__tags-clear" type="button" @click=${input.onClearTags}>Clear selection</button>
+          </span>`
+        : nothing}
+      <span class="mono side__tags-count">${input.tags.length}</span>
+    </div>
+    <ul class="side__tag-list" id=${listId} ?hidden=${!input.tagsOpen}>
       ${input.tags.map(
         (t) => html`<li>
-          <label class="side__tag" title=${t.description ?? ''}>
-            <input type="checkbox" .checked=${input.selectedTags.has(t.name)} @change=${() => input.onToggleTag(t.name)} />
+          <button class="side__item side__item--plain side__tag" type="button" aria-pressed=${input.selectedTags.has(t.name) ? 'true' : 'false'} title=${t.description ?? ''} @click=${() => input.onToggleTag(t.name)}>
             <span class="side__label">${t.name}</span>
             <span class="side__count">${t.count}</span>
-          </label>
+          </button>
         </li>`,
       )}
     </ul>
-    ${selected > 0 ? html`<button class="side__tags-clear" type="button" @click=${input.onClearTags}>Clear tags</button>` : nothing}
-  </details>`;
+  </div>`;
 }
 
 function renderItem(item: NavItem, input: SidebarInput): TemplateResult {
