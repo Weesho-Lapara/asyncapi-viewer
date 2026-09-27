@@ -22,6 +22,15 @@ export interface NavItem {
   count?: number;
   /** Lower-cased strings the search matches against. */
   search: string[];
+  /** Operations: the tag names they carry, for the Tags facet. */
+  tags?: string[];
+}
+
+/** One entry of the sidebar's Tags block: a tag and how many operations carry it. */
+export interface TagFacet {
+  name: string;
+  description?: string;
+  count: number;
 }
 
 export interface NavOptions {
@@ -48,14 +57,16 @@ export function buildNavItems(doc: Document, operations: Operation[], prefix: st
   for (const op of operations) {
     // Flat mode lists every operation under one "Operations" heading; tag modes group by tag.
     const group = options.showOperations === 'byDefault' ? 'Operations' : groupFor(op.tags.map((t) => t.name), doc, options.showOperations === 'bySpecTags');
+    const tags = op.tags.map((t) => t.name);
     items.push({
       kind: 'operation',
       label: op.heading,
       anchor: `${prefix}--operations--${op.anchor}`,
       group,
       badge: { label: op.badgeLabel, action: op.action },
-      // The channel address is searchable but not shown: the list stays a list of operations.
-      search: [op.heading, op.id, op.channel.address ?? '', ...op.messages.flatMap((m) => [m.name ?? '', m.title ?? ''])]
+      tags,
+      // The channel address and tags are searchable but not shown: the list stays a list of operations.
+      search: [op.heading, op.id, op.channel.address ?? '', ...op.messages.flatMap((m) => [m.name ?? '', m.title ?? '']), ...tags]
         .filter((s) => s !== '')
         .map((s) => s.toLowerCase()),
     });
@@ -79,6 +90,29 @@ function groupFor(tags: string[], doc: Document, bySpec: boolean): string {
   return tags[0] ?? 'Other';
 }
 
+/**
+ * The Tags block's entries (amendment 17): the document's declared tags first, in their order,
+ * then any other tag an operation carries, in first-seen order. Tags no operation carries are
+ * left out, since selecting them could only empty the list.
+ */
+export function tagFacets(doc: Document, operations: Operation[]): TagFacet[] {
+  const counts = new Map<string, number>();
+  for (const op of operations) for (const t of op.tags) counts.set(t.name, (counts.get(t.name) ?? 0) + 1);
+  const out: TagFacet[] = [];
+  const seen = new Set<string>();
+  const add = (name: string, description?: string) => {
+    const count = counts.get(name);
+    if (count === undefined || seen.has(name)) return;
+    seen.add(name);
+    const facet: TagFacet = { name, count };
+    if (description) facet.description = description;
+    out.push(facet);
+  };
+  for (const t of doc.tags) add(t.name, t.description);
+  for (const op of operations) for (const t of op.tags) add(t.name, t.description);
+  return out;
+}
+
 /** Every space-separated term must match one of the item's search strings. */
 export function matches(item: NavItem, query: string): boolean {
   const terms = query.toLowerCase().split(/\s+/).filter((t) => t !== '');
@@ -94,11 +128,17 @@ export interface FilteredNav {
   active: boolean;
 }
 
-export function filterNav(items: NavItem[], query: string, keepSections: boolean): FilteredNav {
-  const active = query.trim() !== '';
+/**
+ * The search query and the selected tags together: an operation stays when every term matches
+ * and, if any tags are selected, it carries at least one of them. Section links hide while a
+ * filter is active unless `keepSections`.
+ */
+export function filterNav(items: NavItem[], query: string, keepSections: boolean, selectedTags: ReadonlySet<string> = new Set()): FilteredNav {
+  const active = query.trim() !== '' || selectedTags.size > 0;
   const total = items.filter((i) => i.kind === 'operation').length;
   if (!active) return { items, shown: total, total, active };
-  const out = items.filter((i) => (i.kind === 'operation' ? matches(i, query) : keepSections));
+  const tagged = (i: NavItem) => selectedTags.size === 0 || (i.tags ?? []).some((t) => selectedTags.has(t));
+  const out = items.filter((i) => (i.kind === 'operation' ? matches(i, query) && tagged(i) : keepSections));
   return { items: out, shown: out.filter((i) => i.kind === 'operation').length, total, active };
 }
 

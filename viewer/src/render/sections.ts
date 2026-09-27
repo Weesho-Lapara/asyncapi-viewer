@@ -2,7 +2,7 @@
  * Servers, Messages, Schemas and Problems sections (spec 4.10) and the server selector (4.6).
  */
 import { css, html, nothing, type TemplateResult } from 'lit';
-import type { Document, Message, Problem, Server } from '../model/types.js';
+import type { Document, Message, Problem, Server, Tag } from '../model/types.js';
 import { renderBindings, renderSecurity } from './details.js';
 import { examplesFor, renderExamplePanel, type ExampleContext } from './example.js';
 import { renderInline, renderMarkdown } from './markdown.js';
@@ -159,6 +159,14 @@ export const sectionStyles = css`
     font-size: 13px;
     color: var(--_ink-2);
   }
+  .entry__tags {
+    margin-bottom: 12px;
+  }
+  .entry__tags .chip {
+    min-height: 24px;
+    padding: 2px 9px;
+    font-size: 12px;
+  }
   .problems {
     margin: 0;
     padding: 0;
@@ -187,6 +195,13 @@ export const sectionStyles = css`
   }
 `;
 
+function tagChips(tags: Tag[]): TemplateResult | typeof nothing {
+  if (tags.length === 0) return nothing;
+  return html`<ul class="chips entry__tags" aria-label="Tags">
+    ${tags.map((t) => html`<li class="chip" title=${t.description ?? ''}>${t.name}</li>`)}
+  </ul>`;
+}
+
 export interface SectionContext {
   prefix: string;
   tree: (key: string) => TreeState;
@@ -205,6 +220,7 @@ function serverEntry(server: Server, prefix: string): TemplateResult {
       ${server.title ? html`<div class="card__desc"><strong>${server.title}</strong></div>` : nothing}
       ${server.summary ? html`<div class="card__desc">${renderInline(server.summary)}</div>` : nothing}
       ${server.description ? html`<div class="card__desc">${renderMarkdown(server.description)}</div>` : nothing}
+      ${tagChips(server.tags)}
       ${server.variables.length > 0
         ? html`<table class="vars">
             <thead><tr><th>Variable</th><th>Enum</th><th>Default</th><th>Description</th></tr></thead>
@@ -248,6 +264,7 @@ function messageEntry(message: Message, ctx: SectionContext, showExamples: boole
     ${message.summary ? html`<div class="entry__desc">${renderInline(message.summary)}</div>` : nothing}
     ${message.description ? html`<div class="entry__desc">${renderMarkdown(message.description)}</div>` : nothing}
     <div class="entry__body">
+      ${tagChips(message.tags)}
       ${message.payload
         ? html`<div class="block"><h4 class="sub-title">Payload</h4>${renderSchema(message.payload, { label: message.id, prefix: ctx.prefix, key: `${anchor}--payload`, state: ctx.tree(`${anchor}--payload`) })}</div>`
         : nothing}

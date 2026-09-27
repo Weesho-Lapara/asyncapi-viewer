@@ -9,7 +9,7 @@ import { infoStyles, renderInfo } from './render/info.js';
 import { operationStyles, renderOperations } from './render/operation.js';
 import { detailStyles } from './render/details.js';
 import { exampleStyles, type ExampleContext, type ExamplePanelState } from './render/example.js';
-import { buildNavItems, filterNav } from './render/nav.js';
+import { buildNavItems, filterNav, tagFacets } from './render/nav.js';
 import { renderMessages, renderProblems, renderSchemas, renderServers, sectionStyles } from './render/sections.js';
 import { menuIcon, renderSidebar, sidebarStyles } from './render/sidebar.js';
 import { TreeState, treeStyles } from './render/tree.js';
@@ -54,6 +54,8 @@ export class AsyncAPIViewerElement extends LitElement {
   readonly #messageIndex = new Map<string, number>();
   #downloadUrl: string | undefined;
   #query = '';
+  #selectedTags = new Set<string>();
+  #tagsOpen = false;
   #drawerOpen = false;
   #current: string | undefined;
   #liveText = '';
@@ -169,9 +171,13 @@ export class AsyncAPIViewerElement extends LitElement {
 
   #setQuery(query: string, shown: number, total: number): void {
     this.#query = query;
+    this.#announce(shown, total);
+  }
+
+  #announce(shown: number, total: number): void {
     clearTimeout(this.#liveTimer);
     this.#liveTimer = setTimeout(() => {
-      this.#liveText = query.trim() === '' ? '' : `${shown} of ${total} operations shown`;
+      this.#liveText = this.#query.trim() === '' && this.#selectedTags.size === 0 ? '' : `${shown} of ${total} operations shown`;
       this.requestUpdate();
     }, 300);
     this.requestUpdate();
@@ -292,6 +298,8 @@ export class AsyncAPIViewerElement extends LitElement {
     this.#panels.clear();
     this.#messageIndex.clear();
     this.#query = '';
+    this.#selectedTags = new Set();
+    this.#tagsOpen = false;
     this.#drawerOpen = false;
     this.#current = undefined;
     if (this.#downloadUrl) URL.revokeObjectURL(this.#downloadUrl);
@@ -357,7 +365,8 @@ export class AsyncAPIViewerElement extends LitElement {
           showOperations: o.showOperations,
         })
       : [];
-    const filtered = filterNav(navItems, this.#query, o.searchKeepSections);
+    const filtered = filterNav(navItems, this.#query, o.searchKeepSections, this.#selectedTags);
+    const count = (query: string, tags: ReadonlySet<string>) => filterNav(navItems, query, o.searchKeepSections, tags).shown;
     const menu = o.sidebar
       ? html`<button
           class="menu"
@@ -412,12 +421,29 @@ export class AsyncAPIViewerElement extends LitElement {
     >
       ${renderSidebar({
         items: navItems,
+        tags: tagFacets(m, operations),
+        selectedTags: this.#selectedTags,
+        tagsOpen: this.#tagsOpen,
+        onTagsToggle: (open) => {
+          this.#tagsOpen = open;
+        },
+        onToggleTag: (name) => {
+          const next = new Set(this.#selectedTags);
+          if (next.has(name)) next.delete(name);
+          else next.add(name);
+          this.#selectedTags = next;
+          this.#announce(count(this.#query, next), filtered.total);
+        },
+        onClearTags: () => {
+          this.#selectedTags = new Set();
+          this.#announce(count(this.#query, this.#selectedTags), filtered.total);
+        },
         query: this.#query,
         keepSections: o.searchKeepSections,
         current: this.#current,
         open: this.#drawerOpen,
         liveText: this.#liveText,
-        onQuery: (q) => this.#setQuery(q, filterNav(navItems, q, o.searchKeepSections).shown, filtered.total),
+        onQuery: (q) => this.#setQuery(q, count(q, this.#selectedTags), filtered.total),
         onEscape: () => this.#closeDrawer(),
         onChoose: () => this.#closeDrawer(true),
         onClose: () => this.#closeDrawer(),

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildNavItems, filterNav, groupNav, matches, type NavOptions } from '../src/render/nav.js';
+import { buildNavItems, filterNav, groupNav, matches, tagFacets, type NavOptions } from '../src/render/nav.js';
 import { accountsV2 } from './fixtures/expected/accounts-v2.js';
 import { ordersV3 } from './fixtures/expected/orders-v3.js';
 
@@ -18,7 +18,8 @@ describe('buildNavItems', () => {
     ]);
     expect(items[2]).toMatchObject({ anchor: 'v--operations--emitOrderPlaced', badge: { label: 'SEND', action: 'send' } });
     expect(items[2]?.sub).toBeUndefined();
-    expect(items[2]?.search).toEqual(['emitorderplaced', 'emitorderplaced', 'orders.placed', 'orderplaced', 'order placed']);
+    expect(items[2]?.search).toEqual(['emitorderplaced', 'emitorderplaced', 'orders.placed', 'orderplaced', 'order placed', 'orders']);
+    expect(items[2]?.tags).toEqual(['orders']);
     expect(items[4]?.count).toBe(2);
   });
 
@@ -51,6 +52,7 @@ describe('search', () => {
     expect(matches(emit, 'Orders.')).toBe(true);
     expect(matches(emit, 'order placed')).toBe(true);
     expect(matches(emit, 'shipped')).toBe(false);
+    expect(matches(emit, 'ORDERS')).toBe(true); // the tag name
     expect(matches(emit, '')).toBe(true);
   });
 
@@ -71,5 +73,34 @@ describe('search', () => {
     const r = filterNav(grouped, 'login', false);
     expect(groupNav(r.items).map((g) => [g.group, g.items.length])).toEqual([['security', 1]]);
     expect(groupNav(grouped).map((g) => g.group)).toEqual([undefined, 'accounts', 'security', 'Components']);
+  });
+});
+
+describe('tags facet (amendment 17)', () => {
+  it('lists declared document tags first, then operation tags, each with its operation count', () => {
+    // accounts-v2 declares accounts and security; both operations carry one of them.
+    expect(tagFacets(accountsV2, accountsV2.operations)).toEqual([
+      { name: 'accounts', description: 'Account lifecycle', count: 1 },
+      { name: 'security', description: 'Authentication events', count: 1 },
+    ]);
+    // orders-v3 declares none: the operations' own tags in first-seen order.
+    expect(tagFacets(ordersV3, ordersV3.operations)).toEqual([
+      { name: 'orders', count: 1 },
+      { name: 'fulfilment', count: 1 },
+    ]);
+    // A declared tag no operation carries is left out; hidden operations do not count.
+    expect(tagFacets({ ...ordersV3, tags: [{ name: 'unused' }] }, [])).toEqual([]);
+  });
+
+  it('selected tags filter with any-of semantics and compose with the query', () => {
+    const items = buildNavItems(ordersV3, ordersV3.operations, 'v', base);
+    const one = filterNav(items, '', false, new Set(['fulfilment']));
+    expect(one.items.map((i) => i.label)).toEqual(['onOrderShipped']);
+    expect([one.shown, one.total, one.active]).toEqual([1, 2, true]);
+    const both = filterNav(items, '', true, new Set(['orders', 'fulfilment']));
+    expect(both.items.map((i) => i.label)).toEqual(['Orders service', 'Servers', 'emitOrderPlaced', 'onOrderShipped', 'Messages', 'Schemas']);
+    const none = filterNav(items, 'placed', false, new Set(['fulfilment']));
+    expect(none.shown).toBe(0);
+    expect(filterNav(items, '', false, new Set()).active).toBe(false);
   });
 });

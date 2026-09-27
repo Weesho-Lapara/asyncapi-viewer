@@ -82,6 +82,15 @@ These override the imported spec where they differ:
    id), channel label and address inline at one size, message ids instead of titles in the
    Message heading and example panel, the tree toolbar shows the field count and a single
    Expand all / Collapse all toggle. Decided 2026-09-26.
+17. **Tags in the sidebar.** Operation tag names join the search strings of amendment 11, so a
+   query matches tags too. A collapsible Tags block (native `<details>`, closed by default) sits
+   above the operations and lists the document's declared tags first, then any other tag an
+   operation carries, each with its operation count; tags no operation carries are omitted. Any
+   number can be selected (checkboxes); an operation stays when it carries at least one selected
+   tag, and the selection composes with the search box as an intersection. The summary shows
+   how many tags are selected and a Clear link resets them; the live region and the empty state
+   are the ones search uses. Server and message tags render as chips on their cards, and the
+   document tags lead the Info facts. Decided 2026-09-27.
 
 ### Work plan in session-sized chunks
 

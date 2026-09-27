@@ -3,7 +3,7 @@
  * with the current item highlighted. On narrow containers it is a drawer behind a menu button.
  */
 import { css, html, nothing, type TemplateResult } from 'lit';
-import { filterNav, groupNav, type NavItem } from './nav.js';
+import { filterNav, groupNav, type NavItem, type TagFacet } from './nav.js';
 
 export const sidebarStyles = css`
   .layout {
@@ -162,6 +162,91 @@ export const sidebarStyles = css`
     font: 400 12px/1 var(--_font-mono);
     color: var(--_muted);
   }
+  /* Tags block: a collapsed details whose summary looks like a group heading. */
+  .side__tags {
+    margin-top: 6px;
+  }
+  .side__tags-summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 6px 0;
+    margin-bottom: 0;
+  }
+  .side__tags-summary::-webkit-details-marker {
+    display: none;
+  }
+  .side__tags-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  /* The same chevron as the collapsible entries: right when closed, down when open. */
+  .side__tags-title::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    margin: 0 2px 1px 1px;
+    border-right: 1.5px solid var(--_muted);
+    border-bottom: 1.5px solid var(--_muted);
+    transform: rotate(-45deg);
+    transition: transform 120ms;
+  }
+  .side__tags[open] .side__tags-title::before {
+    transform: rotate(45deg);
+    margin-bottom: 3px;
+  }
+  .side__tags-summary:focus-visible {
+    outline: 2px solid var(--_primary);
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+  .side__tags-selected {
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--_primary-text);
+  }
+  .side .side__tag-list {
+    padding-left: 12px;
+  }
+  .side__tag {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 8px;
+    min-height: 36px;
+    padding: 2px 10px;
+    border-radius: var(--_radius-sm);
+    font-size: 13px;
+    color: var(--_ink);
+    cursor: pointer;
+  }
+  .side__tag:hover {
+    background: color-mix(in srgb, var(--_primary) 6%, transparent);
+  }
+  .side__tag input {
+    margin: 0;
+    width: 15px;
+    height: 15px;
+    accent-color: var(--_primary);
+  }
+  .side__tag:focus-within {
+    outline: 2px solid var(--_primary);
+    outline-offset: -2px;
+  }
+  .side__tags-clear {
+    margin: 4px 0 0 22px;
+    padding: 4px 0;
+    border: 0;
+    background: none;
+    color: var(--_primary-text);
+    font: 12px/1.4 var(--_font-body);
+    cursor: pointer;
+    text-decoration: underline;
+  }
+  .side__tags-clear:focus-visible {
+    outline: 2px solid var(--_primary);
+    outline-offset: 2px;
+  }
   .side__empty {
     margin: 8px 10px;
     color: var(--_muted);
@@ -242,6 +327,14 @@ export const sidebarStyles = css`
 
 export interface SidebarInput {
   items: NavItem[];
+  /** The Tags block's entries; empty hides the block. */
+  tags: TagFacet[];
+  selectedTags: ReadonlySet<string>;
+  /** Whether the Tags block is expanded; kept by the element so a re-render never collapses it. */
+  tagsOpen: boolean;
+  onTagsToggle: (open: boolean) => void;
+  onToggleTag: (name: string) => void;
+  onClearTags: () => void;
   query: string;
   keepSections: boolean;
   current: string | undefined;
@@ -257,8 +350,12 @@ export interface SidebarInput {
 const closeIcon = html`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>`;
 
 export function renderSidebar(input: SidebarInput): TemplateResult {
-  const filtered = filterNav(input.items, input.query, input.keepSections);
+  const filtered = filterNav(input.items, input.query, input.keepSections, input.selectedTags);
   const groups = groupNav(filtered.items);
+  // The Tags block sits above the first operations group; with every operation filtered out it
+  // still has to appear, so it goes before the empty state instead.
+  const firstOps = groups.findIndex((g) => g.items.some((i) => i.kind === 'operation'));
+  const tagsBlock = input.tags.length > 0 ? renderTags(input) : nothing;
   return html`<div
     class="side"
     id="${input.id}--sidebar"
@@ -287,7 +384,7 @@ export function renderSidebar(input: SidebarInput): TemplateResult {
         />
         <span class="side__live" aria-live="polite">${input.liveText}</span>
         ${groups.map(
-          (g) => html`<div class="side__block ${g.group !== undefined ? 'side__block--grouped' : ''} ${g.group === 'Components' ? 'side__block--components' : ''}">
+          (g, index) => html`${index === firstOps ? tagsBlock : nothing}<div class="side__block ${g.group !== undefined ? 'side__block--grouped' : ''} ${g.group === 'Components' ? 'side__block--components' : ''}">
             ${g.group !== undefined
               ? html`<div class="side__group">
                   <span>${g.group}</span>
@@ -299,10 +396,38 @@ export function renderSidebar(input: SidebarInput): TemplateResult {
             </ul>
           </div>`,
         )}
+        ${firstOps === -1 && filtered.total > 0 ? tagsBlock : nothing}
         ${filtered.active && filtered.shown === 0 ? html`<p class="side__empty">No operations match</p>` : nothing}
       </nav>
     </div>
   </div>`;
+}
+
+/**
+ * The Tags block (amendment 17): a collapsed `<details>` above the operations whose summary
+ * reads like a group heading, holding one checkbox per tag with its operation count. Any
+ * number can be selected; the summary shows how many are, and a Clear link resets them.
+ */
+function renderTags(input: SidebarInput): TemplateResult {
+  const selected = input.selectedTags.size;
+  return html`<details class="side__tags" ?open=${input.tagsOpen} @toggle=${(e: Event) => input.onTagsToggle((e.target as HTMLDetailsElement).open)}>
+    <summary class="side__group side__tags-summary">
+      <span class="side__tags-title">Tags${selected > 0 ? html` <span class="side__tags-selected">${selected} selected</span>` : nothing}</span>
+      <span class="mono">${input.tags.length}</span>
+    </summary>
+    <ul class="side__tag-list">
+      ${input.tags.map(
+        (t) => html`<li>
+          <label class="side__tag" title=${t.description ?? ''}>
+            <input type="checkbox" .checked=${input.selectedTags.has(t.name)} @change=${() => input.onToggleTag(t.name)} />
+            <span class="side__label">${t.name}</span>
+            <span class="side__count">${t.count}</span>
+          </label>
+        </li>`,
+      )}
+    </ul>
+    ${selected > 0 ? html`<button class="side__tags-clear" type="button" @click=${input.onClearTags}>Clear tags</button>` : nothing}
+  </details>`;
 }
 
 function renderItem(item: NavItem, input: SidebarInput): TemplateResult {
