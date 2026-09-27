@@ -321,13 +321,35 @@ export interface Binding {
 }
 
 /** A resolved security requirement: the scheme inlined, plus the scopes requested. */
+export interface SecurityScope {
+  name: string;
+  description: string;
+}
+
+/** One OAuth 2 flow with the URLs a reader needs and the scopes it offers. */
+export interface SecurityFlow {
+  /** implicit, password, clientCredentials or authorizationCode. */
+  kind: string;
+  authorizationUrl?: string;
+  tokenUrl?: string;
+  refreshUrl?: string;
+  scopes: SecurityScope[];
+}
+
 export interface SecurityRequirement {
   /** The `components.securitySchemes` key. */
   id: string;
   type: string;
   /** markdown */
   description?: string;
+  /** Scopes this requirement asks for (the requirement's own list). */
   scopes: string[];
+  /** Scheme facts worth reading: apiKey `in`, httpApiKey `name` and `in`, http `scheme` and `bearerFormat`. Only when there are any. */
+  facts?: Array<{ label: string; value: string }>;
+  /** openIdConnect: the discovery URL. */
+  openIdConnectUrl?: string;
+  /** oauth2: the flows, only when the scheme defines any. */
+  flows?: SecurityFlow[];
 }
 
 export type ProblemSeverity = 'error' | 'warning';

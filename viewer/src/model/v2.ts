@@ -3,7 +3,7 @@
  * what the application receives and `subscribe` what it sends. The badge keeps the raw keyword
  * (`PUB` / `SUB` by default), the location hint keeps the channel path.
  */
-import { Context, isObj, str, type Located, type Obj } from './context.js';
+import { Context, isObj, securitySchemeDetails, str, type Located, type Obj } from './context.js';
 import { buildSchema } from './schema.js';
 import type {
   Channel,
@@ -126,7 +126,10 @@ class V2State {
           type: scheme ? (str(scheme.value['type']) ?? '') : '',
           scopes: Array.isArray(scopes) ? scopes.map(String) : [],
         };
-        if (scheme) setIf(req, 'description', str(scheme.value['description']));
+        if (scheme) {
+          setIf(req, 'description', str(scheme.value['description']));
+          Object.assign(req, securitySchemeDetails(scheme.value));
+        }
         out.push(req);
       }
     });

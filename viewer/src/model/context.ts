@@ -3,7 +3,7 @@
  * anchor allocation and the small helpers every normaliser needs.
  */
 import { schemaNameOf, type RefResolver } from '../load/refs.js';
-import type { Binding, BindingScope, ExternalDocs, Problem, SectionId, Tag } from './types.js';
+import type { Binding, BindingScope, ExternalDocs, Problem, SectionId, SecurityFlow, SecurityRequirement, Tag } from './types.js';
 
 export interface Labels {
   publish: string;
@@ -203,6 +203,63 @@ function describeType(value: unknown): string {
 }
 
 /** Deep merge where `over` wins; lists and scalars are replaced, objects merged key by key. */
+/**
+ * The facts of a security scheme object that a reader wants beside its name: where an API key
+ * goes, the HTTP scheme, the OpenID discovery URL and, for OAuth 2, every flow with its URLs and
+ * scopes. v2 flows list scopes under `scopes`, v3 under `availableScopes`; both are read.
+ */
+export function securitySchemeDetails(scheme: Obj): Pick<SecurityRequirement, 'facts' | 'openIdConnectUrl' | 'flows'> {
+  const out: Pick<SecurityRequirement, 'facts' | 'openIdConnectUrl' | 'flows'> = {};
+  const facts: Array<{ label: string; value: string }> = [];
+  const fact = (label: string, key: string) => {
+    const value = str(scheme[key]);
+    if (value !== undefined) facts.push({ label, value });
+  };
+  switch (str(scheme['type'])) {
+    case 'apiKey':
+      fact('in', 'in');
+      break;
+    case 'httpApiKey':
+      fact('name', 'name');
+      fact('in', 'in');
+      break;
+    case 'http':
+      fact('scheme', 'scheme');
+      fact('bearer format', 'bearerFormat');
+      break;
+    case 'openIdConnect': {
+      const url = str(scheme['openIdConnectUrl']);
+      if (url !== undefined) out.openIdConnectUrl = url;
+      break;
+    }
+    case 'oauth2': {
+      const flows = scheme['flows'];
+      if (isObj(flows)) {
+        const list: SecurityFlow[] = [];
+        for (const [kind, raw] of Object.entries(flows)) {
+          if (!isObj(raw)) continue;
+          const flow: SecurityFlow = { kind, scopes: [] };
+          const auth = str(raw['authorizationUrl']);
+          const token = str(raw['tokenUrl']);
+          const refresh = str(raw['refreshUrl']);
+          if (auth !== undefined) flow.authorizationUrl = auth;
+          if (token !== undefined) flow.tokenUrl = token;
+          if (refresh !== undefined) flow.refreshUrl = refresh;
+          const scopes = raw['availableScopes'] ?? raw['scopes'];
+          if (isObj(scopes)) {
+            for (const [name, description] of Object.entries(scopes)) flow.scopes.push({ name, description: typeof description === 'string' ? description : '' });
+          }
+          list.push(flow);
+        }
+        if (list.length > 0) out.flows = list;
+      }
+      break;
+    }
+  }
+  if (facts.length > 0) out.facts = facts;
+  return out;
+}
+
 export function mergeObjects(base: Obj, over: Obj): Obj {
   const out: Obj = { ...base };
   for (const [key, v] of Object.entries(over)) {

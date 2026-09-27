@@ -3,7 +3,7 @@
  * operations, messages and reply. Traits, security details and bindings edge cases are refined
  * in chunk 1.7; this chunk establishes the shape.
  */
-import { Context, isObj, str, type Located, type Obj } from './context.js';
+import { Context, isObj, securitySchemeDetails, str, type Located, type Obj } from './context.js';
 import { buildSchema } from './schema.js';
 import type {
   Channel,
@@ -127,6 +127,7 @@ class V3State {
         scopes: Array.isArray(located.value['scopes']) ? located.value['scopes'].map(String) : [],
       };
       setIf(req, 'description', str(located.value['description']));
+      Object.assign(req, securitySchemeDetails(located.value));
       out.push(req);
       void w;
     }

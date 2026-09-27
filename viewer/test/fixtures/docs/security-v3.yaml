@@ -1,0 +1,63 @@
+asyncapi: 3.0.0
+info:
+  title: Security schemes
+  version: 1.0.0
+servers:
+  broker:
+    host: broker.example.com
+    protocol: mqtt
+    security:
+      - $ref: '#/components/securitySchemes/apiKey'
+      - type: oauth2
+        description: Flows to support OAuth 2.0
+        flows:
+          implicit:
+            authorizationUrl: https://auth.example/auth
+            availableScopes:
+              'lights:on': Switch lights on
+              'lights:off': Switch lights off
+          authorizationCode:
+            authorizationUrl: https://auth.example/auth
+            tokenUrl: https://auth.example/token
+            refreshUrl: https://auth.example/refresh
+            availableScopes:
+              'lights:on': Switch lights on
+              'lights:dim': Dim the lights
+      - $ref: '#/components/securitySchemes/oidc'
+      - $ref: '#/components/securitySchemes/bearer'
+      - $ref: '#/components/securitySchemes/sasl'
+channels:
+  lights:
+    address: lights
+    messages:
+      turnOn:
+        payload:
+          type: object
+operations:
+  turnOn:
+    action: send
+    channel:
+      $ref: '#/channels/lights'
+    security:
+      - type: oauth2
+        scopes: ['lights:on']
+        flows:
+          clientCredentials:
+            tokenUrl: https://auth.example/token
+            availableScopes:
+              'lights:on': Switch lights on
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: user
+      description: Provide your API key as the user and leave the password empty.
+    oidc:
+      type: openIdConnect
+      openIdConnectUrl: https://auth.example/.well-known
+    bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    sasl:
+      type: scramSha256

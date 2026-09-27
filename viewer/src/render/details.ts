@@ -136,6 +136,69 @@ export const detailStyles = css`
   .sec__id:focus-visible {
     text-decoration: underline;
   }
+  .sec--row {
+    justify-items: start;
+    gap: 8px;
+  }
+  .sec__pill {
+    background: var(--_bg);
+  }
+  .sec__details {
+    display: grid;
+    gap: 6px;
+    width: 100%;
+    min-width: 0;
+  }
+  .sec__facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+    font-size: 12px;
+    color: var(--_ink);
+  }
+  .sec__url a,
+  .sec__flows a {
+    color: var(--_primary-text);
+    overflow-wrap: anywhere;
+  }
+  .sec__flows,
+  .sec__scopes {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: 4px 14px;
+    margin: 0;
+    font-size: 12px;
+  }
+  .sec__flows dt,
+  .sec__scopes dt {
+    color: var(--_ink);
+  }
+  .sec__flows dd,
+  .sec__scopes dd {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 14px;
+    margin: 0;
+    min-width: 0;
+    color: var(--_ink-2);
+  }
+  .sec__url {
+    display: inline-flex;
+    gap: 5px;
+    min-width: 0;
+  }
+  @container viewer (max-width: 699px) {
+    .sec__flows,
+    .sec__scopes {
+      grid-template-columns: 1fr;
+      gap: 2px;
+    }
+    .sec__flows dd,
+    .sec__scopes dd {
+      flex-direction: column;
+      margin-bottom: 6px;
+    }
+  }
   .reply {
     padding: 14px 16px;
     border: 1px solid var(--_line);
@@ -277,27 +340,62 @@ export function renderBindings(bindings: Binding[], title = 'Bindings', style: B
   </div>`;
 }
 
+/** Everything under a security chip's head: description, scheme facts, OpenID URL, OAuth flows and scopes. */
+function securityDetails(s: SecurityRequirement): TemplateResult | typeof nothing {
+  const flows = s.flows ?? [];
+  // Flows usually offer the same scopes; list each scope once, in first-seen order.
+  const scopes = new Map<string, string>();
+  for (const f of flows) for (const sc of f.scopes) if (!scopes.has(sc.name)) scopes.set(sc.name, sc.description);
+  const facts = s.facts ?? [];
+  if (!s.description && facts.length === 0 && !s.openIdConnectUrl && flows.length === 0) return nothing;
+  const link = (label: string, url: string | undefined) => (url ? html`<span class="sec__url"><span class="chip__scope">${label}</span><a href=${url}>${url}</a></span>` : nothing);
+  return html`<div class="sec__details">
+    ${s.description ? html`<span class="chip__desc">${renderInline(s.description)}</span>` : nothing}
+    ${facts.length > 0 || s.openIdConnectUrl
+      ? html`<span class="sec__facts mono">
+          ${facts.map((f) => html`<span class="sec__fact"><span class="chip__scope">${f.label} </span>${f.value}</span>`)}
+          ${link('discovery', s.openIdConnectUrl)}
+        </span>`
+      : nothing}
+    ${flows.length > 0
+      ? html`<dl class="sec__flows">
+          ${flows.map(
+            (f) => html`<dt class="mono">${f.kind}</dt>
+              <dd class="mono">${link('authorization', f.authorizationUrl)}${link('token', f.tokenUrl)}${link('refresh', f.refreshUrl)}</dd>`,
+          )}
+        </dl>`
+      : nothing}
+    ${scopes.size > 0
+      ? html`<dl class="sec__scopes">
+          ${[...scopes].map(([name, description]) => html`<dt class="mono">${name}</dt><dd>${description ? renderInline(description) : nothing}</dd>`)}
+        </dl>`
+      : nothing}
+  </div>`;
+}
+
 /**
  * A security requirement as a chip, in the same two styles as bindings: `pill` (operations) puts
- * the scheme id, its type and scopes in one pill, the id linking to the Servers section; `split`
- * (servers) puts the id in the pill and the type beside it, with nothing to link to. A description
- * sits underneath on a full-width row, as for bindings.
+ * the scheme id, its type and the required scopes in one pill, the id linking to the Servers
+ * section; `split` (servers) puts the id in the pill and the type beside it, with nothing to link
+ * to. Details (description, facts, flows, scopes) sit underneath; in the pill style that makes a
+ * full-width boxed row, as for described bindings, with the pill kept inside it.
  */
 function securityChip(s: SecurityRequirement, style: BindingStyle, serversHref?: string): TemplateResult {
   const id = serversHref ? html`<a class="sec__id" href=${serversHref}>${s.id}</a>` : html`<span class="mono">${s.id}</span>`;
   // An inline v3 requirement has no key, so the normaliser names it after its type: show it once.
   const type = s.type && s.type !== s.id ? html`<span class="chip__value mono">${s.type}</span>` : nothing;
-  const scopes = s.scopes.length > 0 ? html`<span class="chip__value mono"><span class="chip__scope">scopes </span>${s.scopes.join(' · ')}</span>` : nothing;
-  const description = s.description ? html`<span class="chip__desc">${renderInline(s.description)}</span>` : nothing;
+  const required = s.scopes.length > 0 ? html`<span class="chip__value mono"><span class="chip__scope">scopes </span>${s.scopes.join(' · ')}</span>` : nothing;
+  const details = securityDetails(s);
   if (style === 'split') {
-    return html`<li class="binding ${s.description ? 'binding--described' : ''}">
-      <span class="binding__head"><span class="chip">${id}</span>${type}${scopes}</span>
-      ${description}
+    return html`<li class="binding ${details !== nothing ? 'binding--described' : ''}">
+      <span class="binding__head"><span class="chip">${id}</span>${type}${required}</span>
+      ${details}
     </li>`;
   }
-  return html`<li class="chip ${s.description ? 'chip--row' : ''}">
-    <span class="chip__head">${id}${type}${scopes}</span>
-    ${description}
+  if (details === nothing) return html`<li class="chip"><span class="chip__head">${id}${type}${required}</span></li>`;
+  return html`<li class="chip chip--row sec--row">
+    <span class="chip sec__pill"><span class="chip__head">${id}${type}${required}</span></span>
+    ${details}
   </li>`;
 }
 

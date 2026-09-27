@@ -41,9 +41,10 @@ describe('v2 normaliser', () => {
     ]);
     expect(post?.channel.servers).toEqual(['prod']);
     expect(post?.channel.bindings).toEqual([{ scope: 'channel', protocol: 'ws', key: 'method', value: 'GET' }]);
-    expect(post?.security).toEqual([{ id: 'apiKey', type: 'httpApiKey', description: 'Tenant API key', scopes: [] }]);
+    const apiKey = { id: 'apiKey', type: 'httpApiKey', description: 'Tenant API key', scopes: [], facts: [{ label: 'name', value: 'X-Api-Key' }, { label: 'in', value: 'header' }] };
+    expect(post?.security).toEqual([apiKey]);
     expect(doc.servers[0]?.security).toEqual([
-      { id: 'apiKey', type: 'httpApiKey', description: 'Tenant API key', scopes: [] },
+      apiKey,
       { id: 'oauth', type: 'oauth2', scopes: ['read', 'write'] },
       { id: 'ghost', type: '', scopes: [] },
     ]);

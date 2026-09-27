@@ -471,6 +471,16 @@ exports[`v2 normaliser > parameters with schema, server lists, security requirem
       "security": [
         {
           "description": "Tenant API key",
+          "facts": [
+            {
+              "label": "name",
+              "value": "X-Api-Key",
+            },
+            {
+              "label": "in",
+              "value": "header",
+            },
+          ],
           "id": "apiKey",
           "scopes": [],
           "type": "httpApiKey",
@@ -594,6 +604,16 @@ exports[`v2 normaliser > parameters with schema, server lists, security requirem
       "security": [
         {
           "description": "Tenant API key",
+          "facts": [
+            {
+              "label": "name",
+              "value": "X-Api-Key",
+            },
+            {
+              "label": "in",
+              "value": "header",
+            },
+          ],
           "id": "apiKey",
           "scopes": [],
           "type": "httpApiKey",

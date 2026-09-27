@@ -7,6 +7,7 @@ import { normalize } from '../src/model/normalize.js';
 import type { Document } from '../src/model/types.js';
 import multiMessageYaml from './fixtures/docs/multi-message.yaml?raw';
 import requestReplyYaml from './fixtures/docs/request-reply.yaml?raw';
+import securityYaml from './fixtures/docs/security-v3.yaml?raw';
 import { ordersV3 } from './fixtures/expected/orders-v3.js';
 
 async function load(text: string, url = 'https://docs.test/api.yaml'): Promise<Document> {
@@ -18,6 +19,36 @@ async function load(text: string, url = 'https://docs.test/api.yaml'): Promise<D
 }
 
 describe('v3 normaliser', () => {
+  it('security requirements keep the scheme facts, OpenID URL and OAuth flows with URLs and scopes', async () => {
+    const doc = await load(securityYaml);
+    expect(checkDocument(doc)).toEqual([]);
+    expect(doc.servers[0]?.security).toEqual([
+      { id: 'apiKey', type: 'apiKey', description: 'Provide your API key as the user and leave the password empty.', scopes: [], facts: [{ label: 'in', value: 'user' }] },
+      {
+        id: 'oauth2',
+        type: 'oauth2',
+        description: 'Flows to support OAuth 2.0',
+        scopes: [],
+        flows: [
+          { kind: 'implicit', authorizationUrl: 'https://auth.example/auth', scopes: [{ name: 'lights:on', description: 'Switch lights on' }, { name: 'lights:off', description: 'Switch lights off' }] },
+          {
+            kind: 'authorizationCode',
+            authorizationUrl: 'https://auth.example/auth',
+            tokenUrl: 'https://auth.example/token',
+            refreshUrl: 'https://auth.example/refresh',
+            scopes: [{ name: 'lights:on', description: 'Switch lights on' }, { name: 'lights:dim', description: 'Dim the lights' }],
+          },
+        ],
+      },
+      { id: 'oidc', type: 'openIdConnect', scopes: [], openIdConnectUrl: 'https://auth.example/.well-known' },
+      { id: 'bearer', type: 'http', scopes: [], facts: [{ label: 'scheme', value: 'bearer' }, { label: 'bearer format', value: 'JWT' }] },
+      { id: 'sasl', type: 'scramSha256', scopes: [] },
+    ]);
+    expect(doc.operations[0]?.security).toEqual([
+      { id: 'oauth2', type: 'oauth2', scopes: ['lights:on'], flows: [{ kind: 'clientCredentials', tokenUrl: 'https://auth.example/token', scopes: [{ name: 'lights:on', description: 'Switch lights on' }] }] },
+    ]);
+  });
+
   it('reproduces the hand-written orders-v3 model exactly', async () => {
     const doc = await load(ordersYaml);
     expect(checkDocument(doc)).toEqual([]);
