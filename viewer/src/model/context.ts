@@ -208,8 +208,8 @@ function describeType(value: unknown): string {
  * goes, the HTTP scheme, the OpenID discovery URL and, for OAuth 2, every flow with its URLs and
  * scopes. v2 flows list scopes under `scopes`, v3 under `availableScopes`; both are read.
  */
-export function securitySchemeDetails(scheme: Obj): Pick<SecurityRequirement, 'facts' | 'openIdConnectUrl' | 'flows'> {
-  const out: Pick<SecurityRequirement, 'facts' | 'openIdConnectUrl' | 'flows'> = {};
+export function securitySchemeDetails(scheme: Obj): Pick<SecurityRequirement, 'facts' | 'openIdConnectUrl' | 'flows' | 'extensions'> {
+  const out: Pick<SecurityRequirement, 'facts' | 'openIdConnectUrl' | 'flows' | 'extensions'> = {};
   const facts: Array<{ label: string; value: string }> = [];
   const fact = (label: string, key: string) => {
     const value = str(scheme[key]);
@@ -257,6 +257,10 @@ export function securitySchemeDetails(scheme: Obj): Pick<SecurityRequirement, 'f
     }
   }
   if (facts.length > 0) out.facts = facts;
+  // Schemes such as `plain` or `scramSha256` have no standard fields, so authors put the
+  // connection settings in extensions (Adeo: x-sasl.jaas.config, x-security.protocol).
+  const extensions = Object.entries(scheme).filter(([k]) => k.startsWith('x-')).map(([key, value]) => ({ key, value }));
+  if (extensions.length > 0) out.extensions = extensions;
   return out;
 }
 

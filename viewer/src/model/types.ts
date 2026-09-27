@@ -350,6 +350,8 @@ export interface SecurityRequirement {
   openIdConnectUrl?: string;
   /** oauth2: the flows, only when the scheme defines any. */
   flows?: SecurityFlow[];
+  /** Specification extensions (`x-` fields) on the scheme, prefix kept, in document order. Only when there are any. */
+  extensions?: Array<{ key: string; value: unknown }>;
 }
 
 export type ProblemSeverity = 'error' | 'warning';

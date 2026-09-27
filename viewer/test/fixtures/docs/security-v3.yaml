@@ -61,3 +61,7 @@ components:
       bearerFormat: JWT
     sasl:
       type: scramSha256
+      x-security.protocol: SASL_SSL
+      x-sasl.jaas.config: >-
+        org.apache.kafka.common.security.scram.ScramLoginModule required
+        username="<KEY>" password="<SECRET>";

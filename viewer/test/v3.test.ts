@@ -42,7 +42,15 @@ describe('v3 normaliser', () => {
       },
       { id: 'oidc', type: 'openIdConnect', scopes: [], openIdConnectUrl: 'https://auth.example/.well-known' },
       { id: 'bearer', type: 'http', scopes: [], facts: [{ label: 'scheme', value: 'bearer' }, { label: 'bearer format', value: 'JWT' }] },
-      { id: 'sasl', type: 'scramSha256', scopes: [] },
+      {
+        id: 'sasl',
+        type: 'scramSha256',
+        scopes: [],
+        extensions: [
+          { key: 'x-security.protocol', value: 'SASL_SSL' },
+          { key: 'x-sasl.jaas.config', value: 'org.apache.kafka.common.security.scram.ScramLoginModule required username="<KEY>" password="<SECRET>";' },
+        ],
+      },
     ]);
     expect(doc.operations[0]?.security).toEqual([
       { id: 'oauth2', type: 'oauth2', scopes: ['lights:on'], flows: [{ kind: 'clientCredentials', tokenUrl: 'https://auth.example/token', scopes: [{ name: 'lights:on', description: 'Switch lights on' }] }] },

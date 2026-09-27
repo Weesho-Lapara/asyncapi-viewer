@@ -174,6 +174,16 @@ export const detailStyles = css`
   .sec__list a {
     color: var(--_primary-text);
   }
+  .sec__pre {
+    margin: 2px 0 0;
+    padding: 8px 10px;
+    border: 1px solid var(--_line);
+    border-radius: var(--_radius-sm);
+    background: var(--_surface);
+    font: 11.5px/1.5 var(--_font-mono);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
   .sec__group {
     display: grid;
     gap: 4px;
@@ -363,14 +373,16 @@ function securityDetails(s: SecurityRequirement): TemplateResult | typeof nothin
   for (const f of flows) for (const sc of f.scopes) if (!scopes.has(sc.name)) scopes.set(sc.name, sc.description);
   if (scopes.size > 0) for (const name of s.scopes) if (!scopes.has(name)) scopes.set(name, '');
   const facts = s.facts ?? [];
-  if (!s.description && facts.length === 0 && !s.openIdConnectUrl && flows.length === 0) return nothing;
+  const extensions = s.extensions ?? [];
+  if (!s.description && facts.length === 0 && extensions.length === 0 && !s.openIdConnectUrl && flows.length === 0) return nothing;
   const url = (label: string, href: string | undefined) => (href ? html`<li class="mono"><span class="chip__scope">${label} </span><a href=${href}>${href}</a></li>` : nothing);
   return html`<div class="sec__details">
     ${s.description ? html`<span class="chip__desc">${renderInline(s.description)}</span>` : nothing}
-    ${facts.length > 0 || s.openIdConnectUrl
+    ${facts.length > 0 || extensions.length > 0 || s.openIdConnectUrl
       ? html`<ul class="sec__list">
           ${facts.map((f) => html`<li class="mono"><span class="chip__scope">${f.label} </span>${f.value}</li>`)}
           ${url('discovery', s.openIdConnectUrl)}
+          ${extensions.map((x) => html`<li class="mono"><span class="chip__scope">${x.key.slice(2)} </span>${extensionValue(x.value)}</li>`)}
         </ul>`
       : nothing}
     ${flows.length > 0
@@ -393,6 +405,16 @@ function securityDetails(s: SecurityRequirement): TemplateResult | typeof nothin
         </div>`
       : nothing}
   </div>`;
+}
+
+/** An extension's value: scalars inline, long strings and objects as a small code block. */
+function extensionValue(value: unknown): TemplateResult {
+  if (typeof value === 'string') {
+    return value.length <= 60 && !value.includes('\n') ? html`${value}` : html`<pre class="sec__pre">${value}</pre>`;
+  }
+  if (typeof value === 'number' || typeof value === 'boolean' || value === null) return html`${String(value)}`;
+  const text = JSON.stringify(value);
+  return text.length <= 60 ? html`${text}` : html`<pre class="sec__pre">${JSON.stringify(value, null, 2)}</pre>`;
 }
 
 /** True when the details list the scopes, so the head does not repeat them. */
