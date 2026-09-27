@@ -35,7 +35,7 @@ browser. It comes two ways, with the same version number:
     `npm install asyncapi-viewer`, or one script tag from jsDelivr. A standard custom element with
     TypeScript types, `asyncapi-load` and `asyncapi-error` events, and a tested React integration.
 
-    [Web pages and React](web.md)
+    [Getting started](getting-started.md)
 
 </div>
 
@@ -71,7 +71,6 @@ This site is built with the MkDocs plugin. See the [live demo](demo.md).
 ## Where next
 
 - [Getting started](getting-started.md): MkDocs, Zensical or plain Python-Markdown in a few lines.
-- [Web pages and React](web.md): npm, a script tag, React and TypeScript, events.
 - [Live demo](demo.md): AsyncAPI 2 and 3, Kafka with Avro, request and reply, a customised theme and an error.
 - [Attributes](attributes.md): every option, the same in Markdown, HTML and JSX.
 - [Configuration](configuration.md): plugin options, self-hosting, the CDN, Content Security Policy.
