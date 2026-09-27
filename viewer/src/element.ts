@@ -56,6 +56,9 @@ export class AsyncAPIViewerElement extends LitElement {
   #query = '';
   #selectedTags = new Set<string>();
   #tagsOpen = false;
+  /** Sidebar width chosen with the resize handle (amendment 19); undefined means the default. */
+  #sideWidth: number | undefined;
+  #resizeStart: { x: number; width: number } | undefined;
   #drawerOpen = false;
   #current: string | undefined;
   #liveText = '';
@@ -132,6 +135,75 @@ export class AsyncAPIViewerElement extends LitElement {
   protected override updated(): void {
     this.#scrollToHash();
     this.#observeSections();
+    // Written through the CSSOM, never as a style attribute, so a strict style-src holds.
+    const layout = (this.renderRoot as ShadowRoot).querySelector<HTMLElement>('.layout');
+    if (layout) {
+      if (this.#sideWidth === undefined) layout.style.removeProperty('--_side-width');
+      else layout.style.setProperty('--_side-width', `${this.#sideWidth}px`);
+    }
+  }
+
+  /** Sidebar width bounds: never narrower than 220px, never leaving the main column under 600px. */
+  #sideWidthBounds(): { min: number; max: number } {
+    const min = 220;
+    const max = Math.max(min, Math.min(560, Math.floor(this.getBoundingClientRect().width) - 600));
+    return { min, max };
+  }
+
+  #setSideWidth(width: number): void {
+    const { min, max } = this.#sideWidthBounds();
+    const next = Math.round(Math.min(max, Math.max(min, width)));
+    if (next !== this.#sideWidth) {
+      this.#sideWidth = next;
+      this.requestUpdate();
+    }
+  }
+
+  #renderResizeHandle() {
+    const { min, max } = this.#sideWidthBounds();
+    const now = this.#sideWidth ?? 292;
+    return html`<div
+      class="side__resize ${this.#resizeStart ? 'side__resize--active' : ''}"
+      role="separator"
+      aria-orientation="vertical"
+      aria-label="Resize sidebar"
+      aria-valuemin=${min}
+      aria-valuemax=${max}
+      aria-valuenow=${now}
+      tabindex="0"
+      title="Drag to resize the sidebar; double-click to reset"
+      @pointerdown=${(e: PointerEvent) => {
+        if (e.button !== 0) return;
+        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+        this.#resizeStart = { x: e.clientX, width: now };
+        e.preventDefault();
+        this.requestUpdate();
+      }}
+      @pointermove=${(e: PointerEvent) => {
+        if (this.#resizeStart) this.#setSideWidth(this.#resizeStart.width + e.clientX - this.#resizeStart.x);
+      }}
+      @pointerup=${() => {
+        this.#resizeStart = undefined;
+        this.requestUpdate();
+      }}
+      @pointercancel=${() => {
+        this.#resizeStart = undefined;
+        this.requestUpdate();
+      }}
+      @dblclick=${() => {
+        this.#sideWidth = undefined;
+        this.requestUpdate();
+      }}
+      @keydown=${(e: KeyboardEvent) => {
+        const step = 16;
+        if (e.key === 'ArrowLeft') this.#setSideWidth(now - step);
+        else if (e.key === 'ArrowRight') this.#setSideWidth(now + step);
+        else if (e.key === 'Home') this.#setSideWidth(min);
+        else if (e.key === 'End') this.#setSideWidth(max);
+        else return;
+        e.preventDefault();
+      }}
+    ></div>`;
   }
 
   /**
@@ -410,7 +482,7 @@ export class AsyncAPIViewerElement extends LitElement {
     `;
     if (!o.sidebar) return html`<div class="layout"><div class="main">${main}</div></div>`;
     return html`<div
-      class="layout layout--sidebar ${this.#drawerOpen ? 'layout--open' : ''}"
+      class="layout layout--sidebar ${this.#drawerOpen ? 'layout--open' : ''} ${this.#resizeStart ? 'layout--resizing' : ''}"
       @keydown=${(e: KeyboardEvent) => {
         if (e.key === 'Escape' && this.#drawerOpen && !(e.target as HTMLElement).classList?.contains('side__search')) {
           this.#closeDrawer();
@@ -450,6 +522,7 @@ export class AsyncAPIViewerElement extends LitElement {
         onClose: () => this.#closeDrawer(),
         id: this.id,
       })}
+      ${this.#renderResizeHandle()}
       <div class="main" ?inert=${this.#drawerOpen}>${main}</div>
     </div>`;
   }

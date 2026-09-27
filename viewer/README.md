@@ -35,6 +35,8 @@ Serve the repository root (`node scripts/serve.mjs`, or any static server) and o
   Firefox passes in CI (Playwright's Firefox build does not launch on this macOS version).
   Lit's constructed stylesheets and the CSSOM writes for derived colours are allowed under a
   strict `style-src`; a `style` attribute binding was not, and was removed.
+- `test/e2e/sidebar.spec.ts`: the resizable sidebar (drag, keyboard, clamping, double-click reset,
+  no handle in the drawer layout).
 - `test/e2e/screenshots.spec.ts`: captures every example document at 1280, 820 and 380px in
   both themes into `test/e2e/screenshots/<browser>/` (ignored by git, uploaded as a CI
   artifact) and asserts no horizontal overflow. Pixel comparison across platforms is not

@@ -98,6 +98,12 @@ These override the imported spec where they differ:
    events with this viewer reads as one. The viewer still never loads fonts itself; the theme
    file shows the Google Fonts `<link>` (or a self-hosted `@font-face`) a page adds to opt in,
    and the demo bench loads them. Decided 2026-09-27.
+19. **Resizable sidebar.** In the wide layout (container 1100px and up) a handle on the boundary
+   between the sidebar and the content drags the sidebar between 220px and 560px, never
+   leaving the main column under 600px; double-click restores the default 292px. The handle is
+   a keyboard-operable separator (arrow keys 16px, Home and End to the bounds). The width lives
+   in the element for the page's lifetime and is written through the CSSOM, so a strict
+   `style-src` holds; below 1100px the drawer is unchanged. Decided 2026-09-27.
 
 ### Work plan in session-sized chunks
 

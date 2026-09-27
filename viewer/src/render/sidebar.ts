@@ -15,9 +15,43 @@ export const sidebarStyles = css`
     container-type: inline-size;
     container-name: main;
   }
+  /* Base rule first, so the wide-container rule below wins on equal specificity. */
+  .side__resize {
+    display: none;
+  }
   @container viewer (min-width: 1100px) {
     .layout--sidebar {
-      grid-template-columns: 292px minmax(0, 1fr);
+      position: relative;
+      grid-template-columns: var(--_side-width, 292px) minmax(0, 1fr);
+    }
+    .layout--resizing {
+      cursor: col-resize;
+      user-select: none;
+    }
+    /* Resize handle (amendment 19): straddles the boundary, shows on hover, focus and drag. */
+    .side__resize {
+      display: block;
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: calc(var(--_side-width, 292px) - 4px);
+      width: 9px;
+      z-index: 5;
+      cursor: col-resize;
+      touch-action: none;
+      outline: none;
+    }
+    .side__resize::after {
+      content: '';
+      position: absolute;
+      inset: 0 3px;
+      background: transparent;
+      transition: background 120ms;
+    }
+    .side__resize:hover::after,
+    .side__resize:focus-visible::after,
+    .side__resize--active::after {
+      background: var(--_primary);
     }
   }
   .side {
