@@ -75,9 +75,14 @@ theme), or set `load_assets: false` and load the module script and stylesheet yo
 ## Zensical
 
 [Zensical](https://zensical.org/) reads `mkdocs.yml` but does not run MkDocs plugins. The extension
-works on its own there: it finds `docs/`, publishes the viewer into `docs/assets/asyncapi-viewer/`
-(add it to `.gitignore`) and links it with docs-relative paths that Zensical rewrites per page,
-as it does for `src`. Local documents are indexed for search and reported when missing.
+works on its own there: list it, and put the viewer under `docs/` once (Zensical lists files before
+it renders pages; commit the copy or run the command in CI). From then on the extension keeps the
+copy fresh and links it with docs-relative paths that Zensical rewrites per page, as it does for
+`src`. Local documents are indexed for search and reported when missing.
+
+```sh
+python -m asyncapi_viewer copy-assets docs/assets/asyncapi-viewer
+```
 
 ```yaml
 markdown_extensions:

@@ -116,8 +116,8 @@ jobs:
         run: npm --prefix viewer ci && npm --prefix viewer run build && python scripts/sync_viewer.py
       - name: MkDocs strict build
         run: mkdocs build --strict --site-dir site-mkdocs
-      - name: Zensical build (no plugin hooks; the extension publishes the viewer under docs/ itself)
-        run: zensical build
+      - name: Zensical build (no plugin hooks; it lists docs/ before rendering, so the viewer is copied there first)
+        run: python -m asyncapi_viewer copy-assets docs/assets/asyncapi-viewer && zensical build
       - name: Both outputs contain the rendered demo and serve the viewer
         run: |
           for site in site-mkdocs site; do

@@ -16,8 +16,9 @@ htmlcov/
 .ruff_cache/
 .mypy_cache/
 
-# MkDocs
+# MkDocs and Zensical (Zensical keeps a render cache in .cache/ and does not clean site/)
 site/
+.cache/
 
 # Credentials
 .pypirc

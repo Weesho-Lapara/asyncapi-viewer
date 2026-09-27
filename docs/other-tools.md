@@ -14,12 +14,20 @@ markdown_extensions:
   - asyncapi_viewer
 ```
 
-That is all. The extension finds the `docs/` directory (or the one you give as `docs_dir`),
-publishes the packaged viewer into `docs/assets/asyncapi-viewer/` on each build and links it with
+Then put the viewer under `docs/` once:
+
+```sh
+python -m asyncapi_viewer copy-assets docs/assets/asyncapi-viewer
+```
+
+Zensical lists the files under `docs/` before it renders any page, so the copy has to exist before
+the first build; commit it or add it to `.gitignore` and run the command in CI. From then on the
+extension keeps it fresh: it finds the `docs/` directory (or the one you give as `docs_dir`),
+rewrites the files there on each build when the package was upgraded, and links them with
 docs-relative paths and integrity hashes, which Zensical rewrites per page like it rewrites `src`.
-Add that directory to `.gitignore`. Local documents are found under `docs/` for the search index
-(page-relative paths are matched by their unique suffix; use a `/`-prefixed path when two files
-share one), and a document that is not found is reported as a warning at build time.
+Local documents are found under `docs/` for the search index (page-relative paths are matched by
+their unique suffix; use a `/`-prefixed path when two files share one), and a document that is not
+found is reported as a warning at build time.
 
 Listing both `plugins: [asyncapi-viewer]` and `markdown_extensions: [asyncapi_viewer]` lets one
 file build under MkDocs and Zensical: under MkDocs the plugin takes over path resolution and serves

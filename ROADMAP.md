@@ -109,10 +109,12 @@ These override the imported spec where they differ:
    `./docs`): local documents are found under it for the search index (exact docs-relative
    path, else a unique suffix match, else a build-time warning), and when `viewer_js` and
    `viewer_theme` are `auto` the packaged viewer is published into `docs_dir/assets_dir` on
-   each build (identical files untouched; the directory belongs in `.gitignore`) and linked with
-   docs-relative paths that such hosts rewrite per page. The MkDocs plugin keeps its own path
-   resolution and serves the viewer from the built site. Decided 2026-09-27 after Weesho asked
-   that Zensical be supported as well as Material.
+   each build (identical files untouched) and linked with docs-relative paths that such hosts
+   rewrite per page. Zensical lists `docs/` before it renders, so the copy must exist before the
+   first build: `python -m asyncapi_viewer copy-assets docs/assets/asyncapi-viewer` once (commit
+   it or run it in CI, as the docs job does); later builds keep it fresh. The MkDocs plugin keeps
+   its own path resolution and serves the viewer from the built site. Decided 2026-09-27 after
+   Weesho asked that Zensical be supported as well as Material.
 
 ### Work plan in session-sized chunks
 
