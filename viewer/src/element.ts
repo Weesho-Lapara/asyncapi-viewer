@@ -3,6 +3,7 @@ import { loadDocument, resolveUrl, type LoadResult } from './load/loader.js';
 import { RefResolver } from './load/refs.js';
 import { normalize } from './model/normalize.js';
 import type { Document, Problem } from './model/types.js';
+import type { AsyncAPIErrorDetail, AsyncAPILoadDetail } from './events.js';
 import { parseOptions, type Options } from './options.js';
 import { headerStyles, renderHeader } from './render/header.js';
 import { infoStyles, renderInfo } from './render/info.js';
@@ -28,6 +29,7 @@ let counter = 0;
  * lowercases camelCase names. The theme controller reflects the resolved mode as
  * `resolved-theme` on the host. Derived colours (badge text, text-safe accents) are computed
  * from the resolved accent at runtime and set as private custom properties on the root.
+ * Each finished load dispatches `asyncapi-load` or `asyncapi-error` (events.ts).
  */
 export class AsyncAPIViewerElement extends LitElement {
   static override styles = [tokens, base, headerStyles, infoStyles, operationStyles, treeStyles, exampleStyles, detailStyles, sectionStyles, sidebarStyles];
@@ -399,6 +401,20 @@ export class AsyncAPIViewerElement extends LitElement {
       this.#normalize();
     }
     this.requestUpdate();
+    await this.updateComplete;
+    if (this.#loadedSrc !== src) return;
+    this.#announceResult(result);
+  }
+
+  /** Fire `asyncapi-load` or `asyncapi-error` for a finished load (see events.ts). */
+  #announceResult(result: LoadResult): void {
+    const init = { bubbles: true, composed: true } as const;
+    if (!result.ok) {
+      this.dispatchEvent(new CustomEvent<AsyncAPIErrorDetail>('asyncapi-error', { ...init, detail: { url: result.url, error: result.error } }));
+    } else if (this.#model) {
+      const detail: AsyncAPILoadDetail = { url: result.url, specVersion: result.specVersion, specMajor: result.specMajor, model: this.#model, problems: this.#problems };
+      this.dispatchEvent(new CustomEvent<AsyncAPILoadDetail>('asyncapi-load', { ...init, detail }));
+    }
   }
 
   /** The options the model is built from, as a key: when it changes the model is rebuilt. */

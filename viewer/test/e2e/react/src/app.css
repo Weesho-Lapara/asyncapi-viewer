@@ -34,3 +34,9 @@ section {
   border: 1px solid color-mix(in srgb, CanvasText 15%, transparent);
   border-radius: 8px;
 }
+
+.status {
+  font-family: ui-monospace, monospace;
+  font-size: 0.875rem;
+  opacity: 0.8;
+}

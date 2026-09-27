@@ -17,10 +17,9 @@ export default tseslint.config(
     },
   },
   {
-    // The React fixture app (test/e2e/react/) is plain JSX in the browser.
-    files: ['test/e2e/react/src/**/*.jsx'],
+    // The React fixture app (test/e2e/react/) runs in the browser.
+    files: ['test/e2e/react/src/**/*.tsx'],
     languageOptions: {
-      parserOptions: { ecmaFeatures: { jsx: true } },
       globals: { Blob: 'readonly' },
     },
   },

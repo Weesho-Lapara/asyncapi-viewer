@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 // Build the React fixture app for react.spec.ts the way a user's app would get the viewer: pack
-// the npm package (so `files` and `exports` are what is tested), install the tarball into this
-// app without saving it, copy the example documents into public/examples/ and run a production
-// Vite build into dist/ (public/examples/, dist/ and node_modules/ are ignored by git). Requires
-// `npm run build` in viewer/ first. Run from anywhere:
+// the npm package (so `files`, `exports` and the shipped types are what is tested), install the
+// tarball into this app without saving it, type-check the app against those types, copy the
+// example documents into public/examples/ and run a production Vite build into dist/
+// (public/examples/, dist/ and node_modules/ are ignored by git). Requires `npm run build` in
+// viewer/ first. Run from anywhere:
 //
 //   node viewer/test/e2e/react/build.mjs
 import { execFileSync } from 'node:child_process';
@@ -35,6 +36,7 @@ for (const name of ['streetlights-kafka-asyncapi.yml', 'adeo-kafka-request-reply
   copyFileSync(join(viewer, 'demo/spec-examples', name), join(examples, name));
 }
 
+execFileSync('npx', ['tsc', '-p', here], { cwd: here, stdio: 'inherit' });
 npm(['run', 'build'], here);
 const index = readFileSync(join(here, 'dist/index.html'), 'utf8');
 if (!/<script type="module"[^>]*src="\/viewer\/test\/e2e\/react\/dist\/assets\//.test(index)) {

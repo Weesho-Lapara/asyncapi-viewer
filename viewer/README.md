@@ -21,7 +21,11 @@ https://weesho-lapara.github.io/asyncapi-viewer/
 ```
 
 Or `npm install asyncapi-viewer` and import `asyncapi-viewer` (an ES module that defines the
-element) or load `asyncapi-viewer/iife` with a plain script tag. The theme file is optional: copy
+element) or load `asyncapi-viewer/iife` with a plain script tag. Each load fires
+`asyncapi-load` (`detail.model`, `detail.problems`) or `asyncapi-error` (`detail.error`). Types
+ship with the package; `import type {} from 'asyncapi-viewer/react'` adds the element to React's
+JSX, with `onasyncapi-load` and `onasyncapi-error`. React and SSR notes:
+https://weesho-lapara.github.io/asyncapi-viewer/other-tools/ The theme file is optional: copy
 it to change the two accent colours, or set any `--asyncapi-*` custom property on the element.
 Fonts are never loaded by the component; the page opts in (see the theme file).
 
@@ -64,10 +68,11 @@ Serve the repository root (`node scripts/serve.mjs`, or any static server) and o
   (`test/e2e/mkdocs/`, built by `build.py`, ignored): viewers render on every page reached
   through instant navigation and through history, with no full load. Skipped until built.
 - `test/e2e/react.spec.ts`: a React 19 app (`test/e2e/react/`, built by `build.mjs` from the
-  packed npm tarball, so `files` and `exports` are tested too; `dist/` ignored): JSX props arrive
-  as attributes (booleans bare or removed, `className` as `class`), `src`, theme, sidebar and
-  label changes from state re-render, repeated unmount and remount, and a document built as a
-  JavaScript object handed over as a Blob URL. Skipped until built.
+  packed npm tarball and type-checked against the shipped types, so `files`, `exports` and the
+  types are tested too; `dist/` ignored): JSX props arrive as attributes (booleans bare or
+  removed, `className` as `class`), `onasyncapi-load`/`onasyncapi-error` receive the events,
+  `src`, theme, sidebar and label changes from state re-render, repeated unmount and remount,
+  and a document built as a JavaScript object handed over as a Blob URL. Skipped until built.
 - `test/e2e/sidebar.spec.ts`: the resizable sidebar (drag, keyboard, clamping, double-click reset,
   no handle in the drawer layout).
 - `test/e2e/screenshots.spec.ts`: captures every example document at 1280, 820 and 380px in

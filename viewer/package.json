@@ -23,13 +23,22 @@
   "files": [
     "dist",
     "theme",
+    "types",
     "README.md"
   ],
   "main": "./dist/asyncapi-viewer.js",
   "module": "./dist/asyncapi-viewer.js",
+  "types": "./dist/types/index.d.ts",
   "exports": {
-    ".": "./dist/asyncapi-viewer.js",
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "default": "./dist/asyncapi-viewer.js"
+    },
     "./iife": "./dist/asyncapi-viewer.iife.js",
+    "./react": {
+      "types": "./types/react.d.ts",
+      "default": "./types/react.js"
+    },
     "./theme/asyncapi-theme.css": "./theme/asyncapi-theme.css"
   },
   "publishConfig": {
@@ -37,7 +46,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "check": "npm run typecheck && npm run lint",

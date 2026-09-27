@@ -31,6 +31,11 @@ viewer/                              the web component (Lit + TypeScript, Vite l
                                      Playwright); published to npm as asyncapi-viewer with each release
   src/model/types.ts                 the normalised model, the contract between normalisers and UI
   src/model/invariants.ts            structural rules every model must satisfy (used by tests)
+  src/events.ts                      public event and attribute types (asyncapi-load/-error,
+                                     AsyncAPIViewerAttributes; test/attributes.test.ts keeps the
+                                     latter in step with the schema); tsconfig.build.json emits
+                                     dist/types/ after the Vite build
+  types/react.d.ts                   JSX typing for React (package export asyncapi-viewer/react)
   test/e2e/                          Playwright: accessibility (axe), CSP page, screenshot capture,
                                      markdown/ (a page rendered by plain Python-Markdown; render.py
                                      writes index.html, ignored) and mkdocs/ (a Material fixture site

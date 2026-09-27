@@ -43,6 +43,10 @@ test('JSX props reach the element as attributes and every viewer renders', async
 
   await expect(page.locator('#react-object .header')).toContainText('Built in React');
   await expect(page.locator('#react-missing .alert')).toContainText('Could not load');
+
+  // The events reach React through onasyncapi-load / onasyncapi-error, with typed details.
+  await expect(page.getByTestId('load-status')).toHaveText('Load 1: Orders service · AsyncAPI 3.0.0 · 2 operations · 0 problems');
+  await expect(page.getByTestId('missing-status')).toHaveText('asyncapi-error: http 404');
   expect(errors, errors.join('\n')).toEqual([]);
 });
 
@@ -52,6 +56,8 @@ test('changing src from React state loads the new document', async ({ page }) =>
 
   await page.getByTestId('document').selectOption('accounts-v2.json');
   await expect(viewer.locator('.header')).toContainText('Accounts');
+  // One asyncapi-load per src, fired once the new document has rendered.
+  await expect(page.getByTestId('load-status')).toHaveText(/^Load 2: Accounts service · AsyncAPI 2\.\d+\.\d+ · 2 operations/);
   await expect(viewer.locator('.pill--outline')).toContainText('AsyncAPI 2');
 
   await page.getByTestId('document').selectOption('streetlights-kafka-asyncapi.yml');
@@ -82,6 +88,8 @@ test('boolean, enum and string props update the rendered viewer', async ({ page 
   // Badge labels are part of the model; a label changed after load must still show.
   await page.getByTestId('send-label').fill('PUBLISH');
   await expect(viewer.locator('.badge--send').first()).toHaveText('PUBLISH');
+  // Option changes on the same src rebuild the model without a new asyncapi-load.
+  await expect(page.getByTestId('load-status')).toHaveText(/^Load 1: /);
   expect(errors, errors.join('\n')).toEqual([]);
 });
 

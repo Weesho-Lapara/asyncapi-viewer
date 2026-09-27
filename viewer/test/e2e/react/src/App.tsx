@@ -1,4 +1,7 @@
-import { useEffect, useState, version } from 'react';
+import { useEffect, useRef, useState, version } from 'react';
+import type { AsyncAPIErrorEvent, AsyncAPILoadEvent, AsyncAPIViewerAttributes } from 'asyncapi-viewer';
+
+type Theme = NonNullable<AsyncAPIViewerAttributes['theme']>;
 
 // Documents copied into public/examples/ by build.mjs: the docs site examples and a few from the
 // asyncapi/spec corpus.
@@ -26,9 +29,26 @@ export function App() {
       <FromObject />
       <section>
         <h2>A document that does not exist</h2>
-        <asyncapi-viewer id="react-missing" src={`${examples}nope.yaml`}></asyncapi-viewer>
+        <MissingDocument />
       </section>
     </main>
+  );
+}
+
+/** The error event: React 19 listens to a custom element's events through on<event-name>. */
+function MissingDocument() {
+  const [error, setError] = useState<string>();
+  return (
+    <>
+      <p className="status" data-testid="missing-status">
+        {error ?? 'Waiting for asyncapi-error…'}
+      </p>
+      <asyncapi-viewer
+        id="react-missing"
+        src={`${examples}nope.yaml`}
+        onasyncapi-error={(e: AsyncAPIErrorEvent) => setError(`asyncapi-error: ${e.detail.error.kind} ${e.detail.error.status ?? ''}`.trim())}
+      ></asyncapi-viewer>
+    </>
   );
 }
 
@@ -39,8 +59,16 @@ function Playground() {
   const [sidebar, setSidebar] = useState(true);
   const [themeToggle, setThemeToggle] = useState(true);
   const [messageExamples, setMessageExamples] = useState(true);
-  const [theme, setTheme] = useState('auto');
+  const [theme, setTheme] = useState<Theme>('auto');
   const [sendLabel, setSendLabel] = useState('SEND');
+  const [status, setStatus] = useState('Loading…');
+  const loads = useRef(0);
+
+  const onLoad = (e: AsyncAPILoadEvent) => {
+    const { model, specVersion, problems } = e.detail;
+    loads.current += 1;
+    setStatus(`Load ${loads.current}: ${model.title} · AsyncAPI ${specVersion} · ${model.operations.length} operations · ${problems.length} problems`);
+  };
 
   return (
     <section>
@@ -58,7 +86,7 @@ function Playground() {
         </label>
         <label>
           Theme{' '}
-          <select data-testid="theme" value={theme} onChange={(e) => setTheme(e.target.value)}>
+          <select data-testid="theme" value={theme} onChange={(e) => setTheme(e.target.value as Theme)}>
             <option value="auto">auto</option>
             <option value="light">light</option>
             <option value="dark">dark</option>
@@ -73,6 +101,9 @@ function Playground() {
         <Check testId="theme-toggle" checked={themeToggle} onChange={setThemeToggle} label="Theme toggle" />
         <Check testId="message-examples" checked={messageExamples} onChange={setMessageExamples} label="Examples expanded" />
       </div>
+      <p className="status" data-testid="load-status">
+        {status}
+      </p>
       {mounted && (
         // React 19 passes unknown props on custom elements as attributes: true becomes an empty
         // (bare) attribute, false removes it, strings pass through. className becomes class.
@@ -85,13 +116,14 @@ function Playground() {
           message-examples={messageExamples ? 'true' : 'false'}
           theme={theme}
           send-label={sendLabel}
+          onasyncapi-load={onLoad}
         ></asyncapi-viewer>
       )}
     </section>
   );
 }
 
-function Check({ testId, checked, onChange, label }) {
+function Check({ testId, checked, onChange, label }: { testId: string; checked: boolean; onChange: (checked: boolean) => void; label: string }) {
   return (
     <label>
       <input type="checkbox" data-testid={testId} checked={checked} onChange={(e) => onChange(e.target.checked)} /> {label}
@@ -105,7 +137,7 @@ function Check({ testId, checked, onChange, label }) {
  */
 function FromObject() {
   const [events, setEvents] = useState(['created']);
-  const [url, setUrl] = useState();
+  const [url, setUrl] = useState<string>();
 
   useEffect(() => {
     const document = {
@@ -136,4 +168,15 @@ function FromObject() {
   );
 }
 
-const cap = (s) => s[0].toUpperCase() + s.slice(1);
+const cap = (s: string) => s[0]!.toUpperCase() + s.slice(1);
+
+// The shipped types are strict: a value outside an enum is a compile error, not a silent string.
+// @ts-expect-error 'sepia' is not a theme
+export const wrongTheme = <asyncapi-viewer src="x.yaml" theme="sepia"></asyncapi-viewer>;
+
+// Plain DOM use is typed too (HTMLElementTagNameMap and HTMLElementEventMap), with no React involved.
+export function plainDomUse(): void {
+  const viewer = document.querySelector('asyncapi-viewer');
+  viewer?.addEventListener('asyncapi-load', (e) => console.log(e.detail.model.operations.length, viewer.model?.title));
+  viewer?.addEventListener('asyncapi-error', (e) => console.warn(e.detail.error.kind satisfies string));
+}

@@ -9,8 +9,14 @@
   `src` rebuilt the model.
 
 ### Added
+- `asyncapi-load` and `asyncapi-error` events on the element, fired once per `src` after the result
+  has rendered, with the model and problems or the load error as `detail`.
+- TypeScript types in the npm package: the element, `AsyncAPIViewerAttributes`, the event types and
+  the model; `HTMLElementTagNameMap` and `HTMLElementEventMap` entries; and
+  `asyncapi-viewer/react` for JSX (`onasyncapi-load` and `onasyncapi-error` included).
 - A React 19 app in the Playwright suite (`viewer/test/e2e/react/`) installs the packed npm
-  package and checks JSX props, `src` changes, unmounting and a document from component state.
+  package, type-checks against its types and checks JSX props, events, `src` changes, unmounting
+  and a document from component state.
 
 ## asyncapi-viewer 2.0.0 (2026-09-27)
 

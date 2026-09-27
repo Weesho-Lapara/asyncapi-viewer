@@ -72,6 +72,63 @@ Material's `navigation.instant` swaps page content without a full reload. The vi
 element, so the elements Material swaps in upgrade and render on their own; nothing subscribes to
 Material's `document$`. Theme changes are followed live through Material's colour scheme attribute.
 
+## Web pages, React and other frameworks
+
+The viewer is a standard web component, published to npm as
+[`asyncapi-viewer`](https://www.npmjs.com/package/asyncapi-viewer) with the same version as the
+Python package. Import it once and use the element anywhere:
+
+```sh
+npm install asyncapi-viewer
+```
+
+```tsx
+import 'asyncapi-viewer';                              // defines <asyncapi-viewer>
+import 'asyncapi-viewer/theme/asyncapi-theme.css';     // optional
+import type {} from 'asyncapi-viewer/react';           // JSX typing, TypeScript only
+
+export function ApiDocs() {
+  return (
+    <asyncapi-viewer
+      src="/asyncapi.yaml"
+      sidebar
+      theme="dark"
+      onasyncapi-load={(e) => console.log(e.detail.model.title)}
+      onasyncapi-error={(e) => console.warn(e.detail.error.message)}
+    ></asyncapi-viewer>
+  );
+}
+```
+
+Attributes are the kebab-case names from [Attributes](attributes.md). React 19 passes `true` as a
+bare attribute and removes `false`; every attribute can change at any time. A document held in
+memory (from an editor or an API) can be shown through a Blob URL:
+`URL.createObjectURL(new Blob([JSON.stringify(doc)], { type: 'application/json' }))`. Internal
+`$ref`s resolve; relative file references need a real URL. The Playwright suite runs a React 19
+app that installs the npm package, so this path is tested on every change.
+
+With server-side rendering (Next.js and similar), import the package only in the browser, for
+example in a `'use client'` component's effect: defining a custom element needs `window`.
+
+**Events.** Each finished load fires one event on the element; both bubble and cross shadow roots,
+and fire after the result has rendered:
+
+| Event | `detail` |
+|---|---|
+| `asyncapi-load` | `url`, `specVersion`, `specMajor` (2 or 3), `model` (the normalised document), `problems` |
+| `asyncapi-error` | `url`, `error` with `kind` (`network`, `http`, `empty`, `parse`, `not-object`, `unsupported`), `message` and, for HTTP, `status` |
+
+In plain JavaScript: `viewer.addEventListener('asyncapi-load', (e) => ...)`. A new `src` fires
+again; changing other attributes does not. A listener added late can read `viewer.model` and
+`viewer.loadResult` instead.
+
+**TypeScript.** The package ships its types: `AsyncAPIViewerElement`, `AsyncAPIViewerAttributes`,
+the event types and the model. `document.querySelector('asyncapi-viewer')` and
+`addEventListener('asyncapi-load', ...)` are typed without extra setup;
+`asyncapi-viewer/react` adds the element to React's JSX.
+
+Without a bundler, load it from jsDelivr with a module script (see [Configuration](configuration.md)).
+
 ## How it works
 
 Each element or fence becomes an `<asyncapi-viewer>` element with validated, kebab-case attributes;

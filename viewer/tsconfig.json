@@ -29,5 +29,7 @@
     "scripts",
     "vite.config.ts",
     "playwright.config.ts"
-  ]
+  ],
+  // The React fixture app has its own tsconfig (JSX, React types) and is checked by its build.mjs.
+  "exclude": ["test/e2e/react"]
 }
