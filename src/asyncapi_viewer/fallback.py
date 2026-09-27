@@ -19,6 +19,7 @@ import html
 import json
 import os
 import re
+from pathlib import Path, PurePosixPath
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlsplit
 
@@ -46,6 +47,34 @@ def default_file_resolver(src: str) -> Optional[str]:
         return None
     path = parts.path
     return path if os.path.isfile(path) else None
+
+
+def resolve_in_docs(src: str, docs_dir: "str | os.PathLike[str]") -> "tuple[Optional[str], Optional[str]]":
+    """Find a page-relative or docs-absolute ``src`` under a docs directory.
+
+    Without the page's location a relative path is matched as a suffix: ``examples/x.yaml``
+    finds ``docs/examples/x.yaml`` or ``docs/api/examples/x.yaml`` as long as exactly one
+    file matches. Returns ``(path, None)`` on success, ``(None, reason)`` otherwise; URLs
+    give ``(None, None)`` because they are not local at all.
+    """
+    parts = urlsplit(src)
+    if not src or parts.scheme or parts.netloc or src.startswith("//"):
+        return None, None
+    rel = parts.path
+    root = Path(docs_dir)
+    if rel.startswith("/"):
+        candidate = root / rel.lstrip("/")
+        return (str(candidate), None) if candidate.is_file() else (None, f"'{rel}' is not under {docs_dir}")
+    exact = root / rel
+    if exact.is_file():
+        return str(exact), None
+    tail = PurePosixPath(rel)
+    matches = sorted(p for p in root.rglob(tail.name) if p.is_file() and p.as_posix().endswith("/" + tail.as_posix()))
+    if len(matches) == 1:
+        return str(matches[0]), None
+    if not matches:
+        return None, f"'{rel}' was not found under {docs_dir}"
+    return None, f"'{rel}' matches {len(matches)} files under {docs_dir}; use a /-prefixed path"
 
 
 def parse_document(text: str, path: str) -> Optional[Any]:

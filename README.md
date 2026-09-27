@@ -74,21 +74,14 @@ theme), or set `load_assets: false` and load the module script and stylesheet yo
 
 ## Zensical
 
-[Zensical](https://zensical.org/) reads `mkdocs.yml` but does not run MkDocs plugins. Enable the
-extension instead, copy the viewer under `docs/` and point the extension at it; relative `src`
-paths are rewritten per page by Zensical itself:
-
-```sh
-python -m asyncapi_viewer copy-assets docs/assets/asyncapi-viewer
-```
+[Zensical](https://zensical.org/) reads `mkdocs.yml` but does not run MkDocs plugins. The extension
+works on its own there: it finds `docs/`, publishes the viewer into `docs/assets/asyncapi-viewer/`
+(add it to `.gitignore`) and links it with docs-relative paths that Zensical rewrites per page,
+as it does for `src`. Local documents are indexed for search and reported when missing.
 
 ```yaml
 markdown_extensions:
-  - asyncapi_viewer:
-      viewer_js: /assets/asyncapi-viewer/asyncapi-viewer.js
-      viewer_theme: /assets/asyncapi-viewer/asyncapi-theme.css
-      viewer_js_integrity: ''
-      viewer_theme_integrity: ''
+  - asyncapi_viewer
 ```
 
 Listing both the plugin and the extension lets one `mkdocs.yml` build under MkDocs and Zensical.
@@ -109,8 +102,9 @@ Extension options (pass them as `extension_configs={"asyncapi_viewer": {...}}`):
 | `viewer_js`, `viewer_theme` | jsDelivr URLs of the packaged version | Where the page loads the viewer and the theme from |
 | `viewer_js_integrity`, `viewer_theme_integrity` | matching SRI hashes | Empty string omits the attribute |
 | `load_assets` | `True` | Emit the module script and the theme link with the first element on a page |
+| `docs_dir` | `auto` (`./docs` when it exists) | Hosts without plugin hooks: find local documents under it, warn when missing, publish the viewer under `assets_dir` inside it |
 | `search_fallback` | `True` | Emit a hidden search index for local documents (needs PyYAML for YAML: `pip install "asyncapi-viewer[yaml]"`) |
-| `file_resolver` | working directory | Callable mapping `src` to a readable local path for the index, or `None`; never called for URLs |
+| `file_resolver` | `docs_dir` lookup, else the working directory | Callable mapping `src` to a readable local path for the index, or `None`; never called for URLs |
 | `url_resolver` | identity | Callable mapping `src` (and relative asset URLs) to what the browser fetches |
 | `warn` | `logging` | Callable receiving warning messages |
 | `renderer` | `viewer` | `legacy` keeps the 1.x output |

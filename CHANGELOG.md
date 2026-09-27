@@ -25,8 +25,11 @@
   addresses and message names inside the element (option `search_fallback`, on by default;
   `file_resolver` decides what counts as a local file; YAML needs the `yaml` extra). The viewer
   removes it on render. The build still never fetches documents.
-- `python -m asyncapi_viewer copy-assets DIR` copies the packaged viewer and prints its hashes,
-  for Zensical and other hosts without plugin hooks.
+- Hosts without plugin hooks (Zensical, MkDocs 2.0) are first-class: the extension finds the
+  docs directory (`docs_dir`, auto-detected as `./docs`), publishes the viewer under it
+  (`assets_dir`) with docs-relative links, finds local documents there for the search index and
+  warns when one is missing. `python -m asyncapi_viewer copy-assets DIR` copies the packaged
+  viewer elsewhere and prints its hashes.
 - `renderer: legacy` keeps the 1.x output for one major version.
 - A Customising page: two accents in a theme file, every design token, fonts, Material palettes.
 

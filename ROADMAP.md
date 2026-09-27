@@ -104,6 +104,15 @@ These override the imported spec where they differ:
    a keyboard-operable separator (arrow keys 16px, Home and End to the bounds). The width lives
    in the element for the page's lifetime and is written through the CSSOM, so a strict
    `style-src` holds; below 1100px the drawer is unchanged. Decided 2026-09-27.
+20. **Hosts without plugin hooks are first-class.** Zensical today and MkDocs 2.0 tomorrow run
+   only the Markdown extension, so the bare extension takes a `docs_dir` (auto-detected as
+   `./docs`): local documents are found under it for the search index (exact docs-relative
+   path, else a unique suffix match, else a build-time warning), and when `viewer_js` and
+   `viewer_theme` are `auto` the packaged viewer is published into `docs_dir/assets_dir` on
+   each build (identical files untouched; the directory belongs in `.gitignore`) and linked with
+   docs-relative paths that such hosts rewrite per page. The MkDocs plugin keeps its own path
+   resolution and serves the viewer from the built site. Decided 2026-09-27 after Weesho asked
+   that Zensical be supported as well as Material.
 
 ### Work plan in session-sized chunks
 
@@ -216,8 +225,9 @@ What was learned:
 ## Ecosystem notes
 
 - **Zensical** (0.0.65) ignores `plugins:` silently but honours `markdown_extensions:` and rewrites
-  relative `data-asyncapi-src` values per page itself. That is why `mkdocs.yml` lists both forms.
-  Build-time "document not found" warnings are MkDocs-only.
+  relative URL-like attribute values per page itself (`src`, and the script and stylesheet paths
+  the extension emits). That is why `mkdocs.yml` lists both forms. Since amendment 20 the
+  extension publishes the viewer under `docs/` and reports missing local documents there too.
 - **MkDocs 2.0** (`2.0.dev6` on PyPI) removes the plugin system according to the Material team. The
   Markdown-extension design is the hedge; `compat.yml` runs the suite against the pre-release weekly.
 - **The current viewer** (`@asyncapi/react-component`) sizes itself with container queries. Below

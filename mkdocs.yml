@@ -2,10 +2,9 @@
 # strict build of this site is an end-to-end test. Both the MkDocs plugin and
 # the bare Markdown extension are listed so the same file builds under MkDocs
 # and under Zensical (which ignores `plugins` but honours `markdown_extensions`).
-# Under MkDocs the plugin publishes the packaged viewer into the site itself and
-# overrides the extension settings below; Zensical has no plugin hooks, so the
-# extension entry points at a copy made by `python -m asyncapi_viewer copy-assets
-# docs/assets/asyncapi-viewer` (ignored by git, run in CI before `zensical build`).
+# Under MkDocs the plugin publishes the packaged viewer into the site itself; under
+# Zensical (no plugin hooks) the extension finds ./docs, publishes the viewer into
+# docs/assets/asyncapi-viewer/ (ignored by git) and links it with docs-relative paths.
 site_name: asyncapi-viewer
 site_description: Render AsyncAPI documents in Markdown and MkDocs with a single <asyncapi-viewer> element.
 site_url: https://weesho-lapara.github.io/asyncapi-viewer/
@@ -51,12 +50,7 @@ plugins:
   - asyncapi-viewer
 
 markdown_extensions:
-  - asyncapi_viewer:
-      # Zensical only (MkDocs replaces these with the served copy and its hashes).
-      viewer_js: /assets/asyncapi-viewer/asyncapi-viewer.js
-      viewer_theme: /assets/asyncapi-viewer/asyncapi-theme.css
-      viewer_js_integrity: ''
-      viewer_theme_integrity: ''
+  - asyncapi_viewer
   - admonition
   - attr_list
   - tables

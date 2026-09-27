@@ -42,7 +42,9 @@ from __future__ import annotations
 import html
 import json
 import logging
+import os
 import re
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
 from markdown import Markdown
@@ -292,11 +294,26 @@ class AsyncAPIViewerPreprocessor(Preprocessor):
         inner = self._search_fallback(src, bool(normalised.get("useChannelAddressAsIdentifier"))) if src else ""
         return f"<asyncapi-viewer {' '.join(parts)}>{inner}</asyncapi-viewer>"
 
+    def _docs_dir(self) -> Optional[Path]:
+        """The docs directory the bare extension works against (hosts without plugin hooks)."""
+        value = self.extension.getConfig("docs_dir")
+        if value == AUTO:
+            return Path("docs") if os.path.isdir("docs") else None
+        return Path(value) if value else None
+
     def _search_fallback(self, src: str, use_channel_address: bool) -> str:
         """The hidden index list for a local document, or ``""``. Never fetches."""
         if not self.extension.getConfig("search_fallback"):
             return ""
-        path = self.extension.getConfig("file_resolver")(src)
+        resolver = self.extension.getConfig("file_resolver")
+        docs = self._docs_dir()
+        if resolver is fallback.default_file_resolver and docs is not None:
+            path, reason = fallback.resolve_in_docs(src, docs)
+            if reason:
+                # The only build-time check a host without plugin hooks gets.
+                self._warn(f"asyncapi-viewer: document {reason}.")
+        else:
+            path = resolver(src)
         if not path:
             return ""
         try:
@@ -346,10 +363,20 @@ class AsyncAPIViewerPreprocessor(Preprocessor):
                 "theme was emitted; set viewer_js and viewer_theme, or build the viewer and run "
                 "scripts/sync_viewer.py."
             )
-        js = self._asset("viewer_js", "", assets.cdn_url(assets.VIEWER_MODULE))
+        # With a docs directory (Zensical, MkDocs 2.0, any host without plugin hooks) the
+        # extension publishes the packaged viewer under it and links docs-relative paths,
+        # which such hosts rewrite per page; the MkDocs plugin never gets here.
+        docs = self._docs_dir()
+        published = docs is not None and assets.packaged() and (cfg("viewer_js") == AUTO or cfg("viewer_theme") == AUTO)
+        assets_dir = cfg("assets_dir").strip("/")
+        if published:
+            assets.copy_assets(docs / assets_dir)
+        default_js = f"{assets_dir}/{assets.VIEWER_MODULE}" if published else assets.cdn_url(assets.VIEWER_MODULE)
+        default_theme = f"{assets_dir}/{assets.VIEWER_THEME}" if published else assets.cdn_url(assets.VIEWER_THEME)
+        js = self._asset("viewer_js", "", default_js)
         theme = cfg("viewer_theme")
         if theme == AUTO:
-            theme = self._asset("viewer_css", "", assets.cdn_url(assets.VIEWER_THEME))  # deprecated alias
+            theme = self._asset("viewer_css", "", default_theme)  # deprecated alias
         js_integrity = self._asset("viewer_js_integrity", "", assets.integrity(assets.VIEWER_MODULE) if cfg("viewer_js") == AUTO else "")
         theme_integrity = self._asset(
             "viewer_theme_integrity", "", assets.integrity(assets.VIEWER_THEME) if cfg("viewer_theme") == AUTO and cfg("viewer_css") == AUTO else ""
@@ -460,6 +487,17 @@ class AsyncAPIViewerExtension(Extension):
                 _default_resolve,
                 "Callable mapping the src attribute (and relative asset URLs) to the URL "
                 "the browser should fetch.",
+            ],
+            "docs_dir": [
+                AUTO,
+                "Hosts without plugin hooks (Zensical, plain Python-Markdown): the documentation "
+                "directory. 'auto' uses ./docs when it exists. With it, local documents are found "
+                "for search_fallback and reported when missing, and the packaged viewer is published "
+                "under assets_dir inside it when viewer_js/viewer_theme are 'auto'. '' disables.",
+            ],
+            "assets_dir": [
+                assets.SITE_ASSET_DIR,
+                "Where, relative to docs_dir, the extension publishes the viewer files.",
             ],
             "search_fallback": [
                 True,

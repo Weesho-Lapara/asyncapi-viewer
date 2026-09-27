@@ -37,6 +37,12 @@ MINIMAL_SCHEMA_YAML = textwrap.dedent(
 )
 
 
+@pytest.fixture(autouse=True)
+def neutral_cwd(tmp_path, monkeypatch):
+    """Run every test from an empty directory: the bare extension auto-detects a ./docs directory."""
+    monkeypatch.chdir(tmp_path)
+
+
 @pytest.fixture
 def warnings_list():
     """Collects warning messages passed to the extension's ``warn`` callable."""

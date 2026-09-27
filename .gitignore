@@ -34,7 +34,7 @@ scratch/
 
 # Docs site build output (any --site-dir name used in CI)
 site-*/
-# Viewer copy for the Zensical build of the docs (python -m asyncapi_viewer copy-assets)
+# Viewer files the bare extension publishes under docs/ for the Zensical build of the docs
 docs/assets/asyncapi-viewer/
 
 # Viewer (Node project under viewer/); built files are copied into the wheel at build time

@@ -117,10 +117,10 @@ python scripts/sync_viewer.py            # copy the built viewer, theme, manifes
   Use a `scratch/` directory (ignored) for demo sites.
 - `mkdocs.yml` lists both `plugins: [asyncapi-viewer]` and `markdown_extensions: [asyncapi_viewer]` on
   purpose: Zensical ignores `plugins` and honours `markdown_extensions`; the plugin does not
-  duplicate an extension the user already listed. Keep both. The extension entry carries explicit
-  `/assets/asyncapi-viewer/` asset paths for Zensical (the plugin overrides them under MkDocs);
-  run `python -m asyncapi_viewer copy-assets docs/assets/asyncapi-viewer` (ignored by git) before
-  `zensical build`, as the CI docs job does.
+  duplicate an extension the user already listed. Keep both. Under Zensical the bare extension
+  auto-detects `./docs` (`docs_dir`), publishes the viewer into `docs/assets/asyncapi-viewer/`
+  (ignored by git) and resolves local documents under `docs/` for the search index; the tests run
+  from a neutral directory (`neutral_cwd` fixture) so that auto-detection stays out of them.
 - The docs site is the end-to-end test. New behaviour should be visible on `docs/demo.md` when it
   makes sense, and `mkdocs build --strict` must stay clean. The site runs on the new viewer;
   `docs/stylesheets/extra.css` loads the design fonts and scopes the demo's customised theme.

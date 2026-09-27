@@ -98,7 +98,10 @@ def copy_assets(dest_dir: "str | Path") -> Dict[str, str]:
     dest.mkdir(parents=True, exist_ok=True)
     out = {}
     for name in VIEWER_FILES:
-        shutil.copyfile(static_path(name), dest / name)
+        source, target = static_path(name), dest / name
+        # Leave an identical file alone, so repeated builds do not touch it.
+        if not target.exists() or target.read_bytes() != source.read_bytes():
+            shutil.copyfile(source, target)
         out[name] = integrity(name)
     return out
 

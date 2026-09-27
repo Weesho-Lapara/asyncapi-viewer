@@ -7,32 +7,27 @@ the MkDocs logger.
 ## Zensical
 
 [Zensical](https://zensical.org/) reads `mkdocs.yml` but does not run MkDocs plugins. It does honour
-`markdown_extensions`, so the extension does the rendering there, and since there is no plugin to
-publish the viewer, copy it under `docs/` and point the extension at the copy:
-
-```sh
-python -m asyncapi_viewer copy-assets docs/assets/asyncapi-viewer
-```
+`markdown_extensions`, and the extension is built to work on its own:
 
 ```yaml title="mkdocs.yml"
 markdown_extensions:
-  - asyncapi_viewer:
-      viewer_js: /assets/asyncapi-viewer/asyncapi-viewer.js
-      viewer_theme: /assets/asyncapi-viewer/asyncapi-theme.css
-      viewer_js_integrity: ''
-      viewer_theme_integrity: ''
+  - asyncapi_viewer
 ```
 
-Relative `src` paths work: Zensical rewrites them per page like it does for links. Listing both
-`plugins: [asyncapi-viewer]` and `markdown_extensions: [asyncapi_viewer]` lets one file build under
-MkDocs and Zensical: the plugin replaces the extension settings with the served copy and its hashes
-when it runs, and Zensical uses them as written. This site is built that way, and a Zensical build
-runs in CI.
+That is all. The extension finds the `docs/` directory (or the one you give as `docs_dir`),
+publishes the packaged viewer into `docs/assets/asyncapi-viewer/` on each build and links it with
+docs-relative paths and integrity hashes, which Zensical rewrites per page like it rewrites `src`.
+Add that directory to `.gitignore`. Local documents are found under `docs/` for the search index
+(page-relative paths are matched by their unique suffix; use a `/`-prefixed path when two files
+share one), and a document that is not found is reported as a warning at build time.
 
-The differences from MkDocs: a missing document is not reported at build time (the viewer shows
-the error in place instead), the asset paths above are site-root-absolute so they assume the site
-is served from the domain root, and the search index is not produced, because the extension cannot
-tell where a page-relative `src` lives without the plugin.
+Listing both `plugins: [asyncapi-viewer]` and `markdown_extensions: [asyncapi_viewer]` lets one
+file build under MkDocs and Zensical: under MkDocs the plugin takes over path resolution and serves
+the viewer from the built site instead of writing under `docs/`. This site is built that way, and a
+Zensical build runs in CI.
+
+To serve the viewer from somewhere else under Zensical, set `viewer_js` and `viewer_theme` in the
+extension config (docs-relative paths or URLs) and the publishing step is skipped.
 
 ## Plain Python-Markdown
 
@@ -49,16 +44,19 @@ Extension options, passed as `extension_configs={"asyncapi_viewer": {...}}`:
 | `viewer_js`, `viewer_theme` | jsDelivr URLs of the packaged version | Where the page loads the viewer and the theme from |
 | `viewer_js_integrity`, `viewer_theme_integrity` | matching SRI hashes | Empty string omits the attribute |
 | `load_assets` | `True` | Emit the module script and the theme link with the first element on a page |
+| `docs_dir` | `auto` | The documentation directory for hosts without plugin hooks: `auto` uses `./docs` when it exists. Local documents are found under it for the search index and reported when missing, and the viewer is published under it when the two URLs are `auto`. `''` disables |
+| `assets_dir` | `assets/asyncapi-viewer` | Where under `docs_dir` the viewer is published |
 | `search_fallback` | `True` | Emit the hidden search index for local documents |
-| `file_resolver` | working directory | Callable mapping `src` to a readable local path for the search index, or `None`; never called for URLs |
+| `file_resolver` | `docs_dir` lookup, else the working directory | Callable mapping `src` to a readable local path for the search index, or `None`; never called for URLs |
 | `url_resolver` | identity | Callable mapping `src` (and relative asset URLs) to what the browser fetches |
 | `warn` | `logging` | Callable receiving warning messages |
 | `renderer` | `viewer` | `legacy` keeps the 1.x React-based output |
 
 Without a `url_resolver`, `src` is emitted as written and the browser resolves it relative to the
 page URL. Use site-root-relative or absolute URLs, or supply a resolver, when pages live in
-subdirectories. Without the plugin the defaults load the viewer from jsDelivr; to serve it yourself,
-copy the files with `python -m asyncapi_viewer copy-assets` and set the two URLs.
+subdirectories. With a docs directory the viewer is published under it and linked docs-relative;
+without one the defaults load it from jsDelivr. To serve it from elsewhere, copy the files with
+`python -m asyncapi_viewer copy-assets` and set the two URLs.
 
 ## Material for MkDocs
 
