@@ -12,9 +12,9 @@ Two syntaxes are accepted and take the same names:
 
     ````markdown
     ```asyncapi
-        src: events.yaml
-        sidebar: true
-        publishLabel: PUBLISH
+    src: events.yaml
+    sidebar: true
+    publishLabel: PUBLISH
     ```
     ````
     
