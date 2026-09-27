@@ -59,6 +59,12 @@ export const treeStyles = css`
     color: var(--_muted);
     font-size: 13px;
   }
+  .tree__leaf {
+    display: grid;
+    gap: 4px;
+    padding: 10px 12px;
+  }
+
   ul.branch {
     list-style: none;
     margin: 0;
@@ -384,6 +390,7 @@ function factsLine(node: SchemaNode): string | undefined {
   if (node.enum) parts.push(`enum: ${node.enum.map(short).join(' · ')}`);
   if (node.const !== undefined) parts.push(`const: ${short(node.const)}`);
   if (node.default !== undefined) parts.push(`default: ${short(node.default)}`);
+  if (node.examples && node.examples.length > 0) parts.push(`examples: ${node.examples.map(short).join(' · ')}`);
   for (const c of node.constraints) parts.push(`${c.key}: ${short(c.value)}`);
   if (node.deprecated) parts.push('deprecated');
   if (node.readOnly) parts.push('read-only');
@@ -411,20 +418,35 @@ export function renderSchema(schema: Schema | undefined, options: TreeOptions): 
   const rows = displayChildren(schema);
   const composition = displayComposition(schema);
   const allOpen = options.state.allExpanded;
+  // A root that is itself a value (a string schema with a format, say) has no fields to count:
+  // the bar names its type instead, and the body describes the value.
+  const leaf = rows.length === 0 && !composition;
+  const bar = options.label ?? (leaf ? typeLabel(schema) || 'no fields' : `${fields} field${fields === 1 ? '' : 's'}`);
   return html`<div class="tree">
     <div class="tree__bar">
-      <span class=${options.label ? 'mono' : ''}>${options.label ?? `${fields} field${fields === 1 ? '' : 's'}`}</span>
+      <span class=${options.label || leaf ? 'mono' : ''}>${bar}</span>
       <span class="spacer"></span>
-      <button type="button" @click=${() => options.state.setAll(!allOpen)}>${allOpen ? 'Collapse all' : 'Expand all'}</button>
+      ${leaf ? nothing : html`<button type="button" @click=${() => options.state.setAll(!allOpen)}>${allOpen ? 'Collapse all' : 'Expand all'}</button>`}
     </div>
     <div class="tree__body">
       ${composition ? renderVariants(schema, composition, options, options.key, 1) : nothing}
-      ${rows.length > 0
-        ? renderBranch(rows, options, options.key, 1)
-        : composition
-          ? nothing
-          : html`<p class="tree__empty">${typeLabel(schema) ? `A single value of type ${typeLabel(schema)}.` : 'No fields are described.'}</p>`}
+      ${rows.length > 0 ? renderBranch(rows, options, options.key, 1) : composition ? nothing : renderLeaf(schema)}
     </div>
+  </div>`;
+}
+
+/**
+ * A schema with no fields: its description and facts (examples, constraints), or, when it has
+ * neither, a sentence saying what the value is.
+ */
+function renderLeaf(node: SchemaNode): TemplateResult {
+  const facts = factsLine(node);
+  if (!node.description && !facts) {
+    return html`<p class="tree__empty">${typeLabel(node) ? `A single value of type ${typeLabel(node)}.` : 'No fields are described.'}</p>`;
+  }
+  return html`<div class="tree__leaf">
+    ${node.description ? html`<div class="row__desc">${renderInline(node.description)}</div>` : nothing}
+    ${facts ? html`<div class="row__facts">${facts}</div>` : nothing}
   </div>`;
 }
 
@@ -490,9 +512,9 @@ function renderVariants(
         (v, i) => html`<button type="button" aria-pressed=${i === selected ? 'true' : 'false'} @click=${() => options.state.selectVariant(key, i)}>${v.title}</button>`,
       )}
     </div>
-    ${variant.node.description ? html`<div class="row__desc">${renderInline(variant.node.description)}</div>` : nothing}
     ${rows.length > 0
-      ? renderBranch(rows, options, `${key}/${composition.kind}${selected}`, depth)
-      : html`<p class="tree__empty">${typeLabel(variant.node) ? `A single value of type ${typeLabel(variant.node)}.` : 'No fields are described.'}</p>`}
+      ? html`${variant.node.description ? html`<div class="row__desc">${renderInline(variant.node.description)}</div>` : nothing}
+          ${renderBranch(rows, options, `${key}/${composition.kind}${selected}`, depth)}`
+      : renderLeaf(variant.node)}
   `;
 }
