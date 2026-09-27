@@ -1,8 +1,6 @@
 # asyncapi-viewer
 
-Render [AsyncAPI](https://www.asyncapi.com/) documents as interactive documentation.
-
-<sub>Made with [Claude](https://claude.com/claude-code)</sub>
+Render [AsyncAPI](https://www.asyncapi.com/) documents as interactive documentation. Made with [Claude](https://claude.com/claude-code).
 
 <table>
 <tr>
@@ -39,8 +37,7 @@ publishLabel: PUBLISH
 </tr>
 </table>
 
-The Markdown syntax is provided by the Python-Markdown extension and MkDocs plugin. The HTML
-syntax is a standard web component. Supports AsyncAPI 2 and 3, JSON and YAML.
+Supports AsyncAPI 2 and 3, JSON and YAML.
 
 [Documentation](https://weesho-lapara.github.io/asyncapi-viewer/) · [Live demo](https://weesho-lapara.github.io/asyncapi-viewer/demo/)
 
@@ -87,8 +84,6 @@ The plugin:
 - validates local documents at build time
 - indexes local documents for site search
 - fails `mkdocs build --strict` when a local document is missing
-
-Works with [Zensical](https://zensical.org/) and other Python-Markdown hosts.
 
 [Getting started](https://weesho-lapara.github.io/asyncapi-viewer/getting-started/)
 
