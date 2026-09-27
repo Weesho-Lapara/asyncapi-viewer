@@ -142,7 +142,8 @@ One version number covers the Python package on PyPI and the viewer on npm; a ta
 2. Tag and push: `git tag v<version> && git push origin v<version>`.
 3. `publish.yml` checks that the tag, both versions and the changelog agree, builds and tests the
    viewer, packs it, builds the wheel, publishes to npm first (trusted publishing with provenance,
-   environment `npm`; the npm-side trusted publisher must exist for `asyncapi-viewer`: GitHub
+   environment `npm`; a version already on npm is skipped, which is how the first, hand-published
+   version gets through; the npm-side trusted publisher must exist for `asyncapi-viewer`: GitHub
    Actions, repository `Weesho-Lapara/asyncapi-viewer`, workflow `publish.yml`, environment `npm`),
    then to PyPI (trusted publishing, environment `pypi`, configured for both projects), then creates
    the GitHub release with that version's changelog section as notes and the wheel, sdist and npm

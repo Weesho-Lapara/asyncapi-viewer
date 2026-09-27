@@ -8,9 +8,11 @@
 # - PyPI, for asyncapi-viewer and the deprecated asyncapi-tag shim: Manage project ->
 #   Publishing -> GitHub publisher with owner Weesho-Lapara, repository asyncapi-viewer,
 #   workflow publish.yml, environment pypi. (Done for both.)
-# - npm, for asyncapi-viewer: package settings -> Publishing access -> Trusted publisher:
-#   GitHub Actions, organisation Weesho-Lapara, repository asyncapi-viewer, workflow
-#   publish.yml, environment npm. The first publish creates the package.
+# - npm, for asyncapi-viewer: the package must exist before a trusted publisher can be
+#   added, so the first version is published by hand (`cd viewer && npm run build && npm
+#   publish --access public`); then package settings -> Publishing access -> Trusted
+#   publisher: GitHub Actions, organisation Weesho-Lapara, repository asyncapi-viewer,
+#   workflow publish.yml, environment npm. A GitHub environment named npm must exist.
 # npm goes first: the Python package's CDN option points at the npm copy of the same version.
 name: Publish
 
@@ -84,7 +86,15 @@ jobs:
           name: distributions
           path: .
       - name: Publish asyncapi-viewer to npm (trusted publishing, with provenance)
-        run: npm publish asyncapi-viewer-*.tgz --provenance --access public
+        # The first version of a package must be published by hand before npm lets a trusted
+        # publisher be configured for it; a version that already exists is skipped, not an error.
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          if npm view "asyncapi-viewer@$version" version >/dev/null 2>&1; then
+            echo "asyncapi-viewer@$version is already on npm; skipping"
+          else
+            npm publish asyncapi-viewer-*.tgz --provenance --access public
+          fi
 
   publish-pypi:
     needs: publish-npm
