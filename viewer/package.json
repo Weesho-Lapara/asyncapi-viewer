@@ -1,6 +1,6 @@
 {
   "name": "asyncapi-viewer",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Renders AsyncAPI 2 and 3 documents as a web component: <asyncapi-viewer src=\"...\">",
   "keywords": [
     "asyncapi",

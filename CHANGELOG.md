@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## asyncapi-viewer 2.1.0 (2026-09-27)
 
 ### Fixed
 - Badge labels (`publish-label` and the other five), `use-channel-address-as-identifier` and
