@@ -3,6 +3,7 @@
  */
 import { css, html, nothing, type TemplateResult } from 'lit';
 import type { Document, Message, Problem, Server, Tag } from '../model/types.js';
+import { tagChip } from './tag.js';
 import { renderBindings, renderSecurity } from './details.js';
 import { examplesFor, renderExamplePanel, type ExampleContext } from './example.js';
 import { renderInline, renderMarkdown } from './markdown.js';
@@ -198,7 +199,7 @@ export const sectionStyles = css`
 function tagChips(tags: Tag[]): TemplateResult | typeof nothing {
   if (tags.length === 0) return nothing;
   return html`<ul class="chips entry__tags" aria-label="Tags">
-    ${tags.map((t) => html`<li class="chip" title=${t.description ?? ''}>${t.name}</li>`)}
+    ${tags.map((t) => tagChip(t))}
   </ul>`;
 }
 

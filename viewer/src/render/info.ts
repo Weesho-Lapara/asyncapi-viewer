@@ -1,6 +1,7 @@
 import { css, html, nothing, type TemplateResult } from 'lit';
 import type { Document } from '../model/types.js';
-import { renderInline, renderMarkdown } from './markdown.js';
+import { tagChip } from './tag.js';
+import { renderMarkdown } from './markdown.js';
 
 export const infoStyles = css`
   .info__desc {
@@ -23,7 +24,7 @@ export function renderInfo(doc: Document, anchorId: string): TemplateResult {
     facts.push([
       'Tags',
       html`<ul class="chips">
-        ${doc.tags.map((t) => html`<li class="chip" title=${t.description ?? ''}>${t.name}${t.description ? html`<span class="visually-hidden">: ${renderInline(t.description)}</span>` : nothing}</li>`)}
+        ${doc.tags.map((t) => tagChip(t))}
       </ul>`,
     ]);
   }

@@ -1,5 +1,6 @@
 import { css, html, nothing, type TemplateResult } from 'lit';
 import type { Document, Message, Operation } from '../model/types.js';
+import { tagChip } from './tag.js';
 import { renderInline, renderMarkdown } from './markdown.js';
 import { renderBindings, renderParameters, renderReply, renderSecurity } from './details.js';
 import { examplesFor, isPanelOpen, renderExamplePanel, renderShowExample, type ExampleContext } from './example.js';
@@ -324,7 +325,7 @@ export function renderOperation(op: Operation, ctx: OperationContext): TemplateR
       <div class="op__intro">
         ${op.tags.length > 0
           ? html`<ul class="chips op__tags" aria-label="Tags">
-              ${op.tags.map((t) => html`<li class="chip" title=${t.description ?? ''}>${t.name}</li>`)}
+              ${op.tags.map((t) => tagChip(t))}
             </ul>`
           : nothing}
         <h3 class="op__heading" id="${anchor}--heading" tabindex="-1">${op.heading}</h3>

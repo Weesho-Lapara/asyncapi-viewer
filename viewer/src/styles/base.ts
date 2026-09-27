@@ -180,6 +180,41 @@ export const base = css`
     font-size: 12.5px;
     color: var(--_ink-2);
   }
+  /* Tag chips carry their description as a tooltip on hover and keyboard focus. */
+  .chip--tip {
+    position: relative;
+    cursor: default;
+  }
+  .chip--tip:focus-visible {
+    outline: 2px solid var(--_primary);
+    outline-offset: 2px;
+  }
+  .chip--tip::after {
+    content: attr(data-tip);
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 25;
+    width: max-content;
+    max-width: min(320px, 70vw);
+    padding: 6px 10px;
+    border-radius: var(--_radius-sm);
+    background: var(--_ink);
+    color: var(--_bg);
+    font: 400 12px/1.45 var(--_font-body);
+    white-space: normal;
+    text-align: left;
+    box-shadow: 0 4px 14px rgb(0 0 0 / 0.18);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 100ms;
+    pointer-events: none;
+  }
+  .chip--tip:hover::after,
+  .chip--tip:focus-visible::after {
+    opacity: 1;
+    visibility: visible;
+  }
   .chip .mono {
     font-size: 12px;
     overflow-wrap: anywhere;
