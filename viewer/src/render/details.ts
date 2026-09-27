@@ -374,11 +374,11 @@ function securityDetails(s: SecurityRequirement): TemplateResult | typeof nothin
 }
 
 /**
- * A security requirement as a chip, in the same two styles as bindings: `pill` (operations) puts
- * the scheme id, its type and the required scopes in one pill, the id linking to the Servers
- * section; `split` (servers) puts the id in the pill and the type beside it, with nothing to link
- * to. Details (description, facts, flows, scopes) sit underneath; in the pill style that makes a
- * full-width boxed row, as for described bindings, with the pill kept inside it.
+ * A security requirement as a chip. The pill holds the scheme id only; its type and the required
+ * scopes sit beside it. `pill` (operations) links the id to the Servers section and, when there
+ * are details (description, facts, flows, scopes), boxes the whole entry as a full-width row like
+ * a described binding; `split` (servers) has nothing to link to and stacks the details underneath
+ * without a box.
  */
 function securityChip(s: SecurityRequirement, style: BindingStyle, serversHref?: string): TemplateResult {
   const id = serversHref ? html`<a class="sec__id" href=${serversHref}>${s.id}</a>` : html`<span class="mono">${s.id}</span>`;
@@ -386,17 +386,12 @@ function securityChip(s: SecurityRequirement, style: BindingStyle, serversHref?:
   const type = s.type && s.type !== s.id ? html`<span class="chip__value mono">${s.type}</span>` : nothing;
   const required = s.scopes.length > 0 ? html`<span class="chip__value mono"><span class="chip__scope">scopes </span>${s.scopes.join(' · ')}</span>` : nothing;
   const details = securityDetails(s);
+  const head = html`<span class="binding__head"><span class="chip ${style === 'pill' ? 'sec__pill' : ''}">${id}</span>${type}${required}</span>`;
   if (style === 'split') {
-    return html`<li class="binding ${details !== nothing ? 'binding--described' : ''}">
-      <span class="binding__head"><span class="chip">${id}</span>${type}${required}</span>
-      ${details}
-    </li>`;
+    return html`<li class="binding ${details !== nothing ? 'binding--described' : ''}">${head}${details}</li>`;
   }
-  if (details === nothing) return html`<li class="chip"><span class="chip__head">${id}${type}${required}</span></li>`;
-  return html`<li class="chip chip--row sec--row">
-    <span class="chip sec__pill"><span class="chip__head">${id}${type}${required}</span></span>
-    ${details}
-  </li>`;
+  if (details === nothing) return html`<li class="binding">${head}</li>`;
+  return html`<li class="chip chip--row sec--row">${head}${details}</li>`;
 }
 
 /** Security requirements as chips (spec 4.7 item 9). `serversHref` links each scheme to the Servers section. */
