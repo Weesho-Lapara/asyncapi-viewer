@@ -213,7 +213,7 @@ export const detailStyles = css`
   .reply {
     padding: 14px 16px;
     border: 1px solid var(--_line);
-    border-left: 3px solid var(--_secondary);
+    border-top: 3px solid var(--_secondary);
     border-radius: var(--_radius);
     background: var(--_surface);
     display: grid;
