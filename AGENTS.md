@@ -27,8 +27,8 @@ src/asyncapi_viewer/
   fallback.py        search fallback: hidden index list for local documents (PyYAML optional)
   mkdocs_plugin.py   MkDocs plugin: config options, registers the extension, resolves src per page
   __main__.py        `python -m asyncapi_viewer copy-assets DIR` for hosts without plugin hooks
-viewer/                              the 2.0 web component (Lit + TypeScript, Vite library build,
-                                     Vitest); work in progress on the viewer-2 branch, see ROADMAP.md
+viewer/                              the web component (Lit + TypeScript, Vite library build, Vitest,
+                                     Playwright); published to npm as asyncapi-viewer with each release
   src/model/types.ts                 the normalised model, the contract between normalisers and UI
   src/model/invariants.ts            structural rules every model must satisfy (used by tests)
   test/e2e/                          Playwright: accessibility (axe), CSP page, screenshot capture,
@@ -128,9 +128,9 @@ python scripts/sync_viewer.py            # copy the built viewer, theme, manifes
 - The docs site is the end-to-end test. New behaviour should be visible on `docs/demo.md` when it
   makes sense, and `mkdocs build --strict` must stay clean. The site runs on the new viewer;
   `docs/stylesheets/extra.css` loads the design fonts and scopes the demo's customised theme.
-- All 2.0 viewer work lives on the `viewer-2` branch until release; `main` keeps 1.x fixes and is
-  merged into the branch when needed. CI runs on pushes to both. `viewer/dist/` and
-  `viewer/node_modules/` are never committed; `package-lock.json` is.
+- Since the 2.0.0 release (2026-09-27) all work happens on `main`; the `viewer-2` feature branch is
+  merged and historical. `viewer/dist/` and `viewer/node_modules/` are never committed;
+  `package-lock.json` is.
 
 ## Releasing
 
