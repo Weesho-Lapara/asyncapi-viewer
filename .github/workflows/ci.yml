@@ -116,7 +116,7 @@ jobs:
         run: npm --prefix viewer ci && npm --prefix viewer run build && python scripts/sync_viewer.py
       - name: MkDocs strict build
         run: mkdocs build --strict --site-dir site-mkdocs
-      - name: Zensical build (no plugin hooks: copy the viewer under docs/ first)
+      - name: "Zensical build (no plugin hooks: copy the viewer under docs/ first)"
         run: python -m asyncapi_viewer copy-assets docs/assets/asyncapi-viewer && zensical build
       - name: Both outputs contain the rendered demo and serve the viewer
         run: |
