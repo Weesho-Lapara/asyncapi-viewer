@@ -138,7 +138,8 @@ python scripts/sync_viewer.py            # copy the built viewer, theme, manifes
   The tests run from a neutral directory (`neutral_cwd` fixture) so auto-detection stays out.
 - The docs site is the end-to-end test. New behaviour should be visible on `docs/demo.md` when it
   makes sense, and `mkdocs build --strict` must stay clean. The site runs on the new viewer;
-  `docs/stylesheets/extra.css` loads the design fonts and scopes the demo's customised theme.
+  `docs/stylesheets/extra.css` loads the design fonts and styles the demo's document picker;
+  `docs/javascripts/demo.js` switches the demo's one viewer between the example documents.
 - Since the 2.0.0 release (2026-09-27) all work happens on `main`; the `viewer-2` feature branch is
   merged and historical. `viewer/dist/` and `viewer/node_modules/` are never committed;
   `package-lock.json` is.

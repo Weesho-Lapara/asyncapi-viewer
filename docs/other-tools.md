@@ -3,7 +3,7 @@
 The Python package is a Python-Markdown extension first. The MkDocs plugin is a thin layer that
 resolves document paths per page, publishes the viewer into the site and reports problems through
 the MkDocs logger. This page covers the hosts without that plugin; [Getting started](getting-started.md)
-has the short version.
+has the short version, and the npm package for web pages and React.
 
 ## Zensical
 
@@ -72,11 +72,6 @@ without one the defaults load it from jsDelivr. To serve it from elsewhere, copy
 Material's `navigation.instant` swaps page content without a full reload. The viewer is a custom
 element, so the elements Material swaps in upgrade and render on their own; nothing subscribes to
 Material's `document$`. Theme changes are followed live through Material's colour scheme attribute.
-
-## Web pages and React
-
-The viewer is on npm too, for pages and apps that are not built from Markdown: see
-[Web pages and React](web.md).
 
 ## How it works
 

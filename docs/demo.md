@@ -1,16 +1,21 @@
 # Live demo
 
-Everything on this page is rendered by `asyncapi-viewer` from the example documents in
-`docs/examples/`: two written for this site, and two from the
-[AsyncAPI specification examples](https://github.com/asyncapi/spec/tree/master/examples)
-(Apache-2.0). The Markdown for each section is shown above its viewer. Switch the site to dark
-mode with the toggle in the header: the viewers follow.
+## AsyncAPI document
 
-The viewers sit in the documentation column, which is narrower than the 1100px the sidebar needs
-to stay open, so it shows as a menu button here. The [overview](index.md) has a screenshot of the
-wide layout, with the sidebar and the example panel beside each message.
+Select the spec you want to view.
 
-## AsyncAPI 3 document (YAML), fenced-block syntax
+<select id="demo-spec" class="demo-select" aria-label="AsyncAPI document">
+  <optgroup label="AsyncAPI 3">
+    <option value="orders" data-src="orders-v3.yaml" data-attrs='{"send-label": "EMIT", "receive-label": "ON"}'>Orders service (YAML)</option>
+    <option value="adeo" data-src="adeo-kafka-request-reply-asyncapi.yml" data-attrs='{"sidebar": ""}'>Adeo: Kafka request/reply with Avro</option>
+    <option value="streetlights" data-src="streetlights-kafka-asyncapi.yml" data-attrs='{"sidebar": "", "show-servers": "byServersTags", "use-channel-address-as-identifier": ""}'>Streetlights over Kafka</option>
+  </optgroup>
+  <optgroup label="AsyncAPI 2">
+    <option value="accounts" data-src="accounts-v2.json" data-attrs='{"sidebar": "", "show-operations": "bySpecTags", "message-examples": "false"}'>Accounts service (JSON)</option>
+  </optgroup>
+</select>
+
+<div data-demo-spec="orders" markdown>
 
 Custom badge labels for the send and receive operations.
 
@@ -22,78 +27,41 @@ receiveLabel: ON
 ```
 ````
 
-```asyncapi
-src: examples/orders-v3.yaml
-sendLabel: EMIT
-receiveLabel: ON
-```
+</div>
 
-## AsyncAPI 2 document (JSON), element syntax, with the sidebar
+<div data-demo-spec="adeo" hidden markdown>
 
-The sidebar is off by default. With `sidebar` on, it sits in a column when the viewer is at least
-1100px wide and behind a menu button otherwise, as here inside the documentation column. It has a
-search box, a Tags block that filters the operations, and grouping by the document's tags. Example
-panels start collapsed here.
+A request with its reply, Kafka bindings, and Avro payloads that the browser fetches from
+asyncapi.com and shows as trees. The sidebar opens from the menu button in a column this narrow.
 
-```markdown
-<asyncapi-viewer src="examples/accounts-v2.json" sidebar showOperations="bySpecTags" messageExamples="false"></asyncapi-viewer>
-```
-
-<asyncapi-viewer src="examples/accounts-v2.json" sidebar showOperations="bySpecTags" messageExamples="false"></asyncapi-viewer>
-
-## Kafka with Avro schemas and request/reply (AsyncAPI 3)
-
-Adeo's costing service from the AsyncAPI case studies: a request operation with its reply, Kafka
-bindings on servers, channels and messages, and payloads written in Avro. The two Avro schemas are
-external `$ref`s to asyncapi.com, fetched by the browser; the viewer turns them into the same trees
-as JSON Schema.
-
-```markdown
+````markdown
 <asyncapi-viewer src="examples/adeo-kafka-request-reply-asyncapi.yml" sidebar></asyncapi-viewer>
-```
+````
 
-<asyncapi-viewer src="examples/adeo-kafka-request-reply-asyncapi.yml" sidebar></asyncapi-viewer>
+</div>
 
-## Streetlights over Kafka, servers grouped by tags (AsyncAPI 3)
+<div data-demo-spec="streetlights" hidden markdown>
 
-The specification's classic example: four operations over two servers with SASL and certificate
-security, a channel parameter in every address, and an operation trait that adds Kafka bindings to
-each operation. The sidebar groups the servers by their tags, and operations are labelled by
-channel address instead of their ids.
+Servers grouped by their tags in the sidebar, and operations labelled by channel address.
 
-```markdown
+````markdown
 <asyncapi-viewer src="examples/streetlights-kafka-asyncapi.yml" sidebar showServers="byServersTags" useChannelAddressAsIdentifier></asyncapi-viewer>
-```
+````
 
-<asyncapi-viewer src="examples/streetlights-kafka-asyncapi.yml" sidebar showServers="byServersTags" useChannelAddressAsIdentifier></asyncapi-viewer>
+</div>
 
-## Customised
+<div data-demo-spec="accounts" hidden markdown>
 
-The same document with two other accents and a squarer radius, from three lines of CSS on the
-page (see [Customising](customising.md)), plus the viewer's own light/dark toggle.
+The sidebar with operations grouped by the document's tags; example panels start collapsed.
 
-```markdown
-<asyncapi-viewer src="examples/orders-v3.yaml" class="demo-custom" themeToggle></asyncapi-viewer>
-```
+````markdown
+<asyncapi-viewer src="examples/accounts-v2.json" sidebar showOperations="bySpecTags" messageExamples="false"></asyncapi-viewer>
+````
 
-```css
-asyncapi-viewer.demo-custom {
-  --asyncapi-primary: #0F766E;
-  --asyncapi-secondary: #9F1239;
-  --asyncapi-radius: 4px;
-}
-```
+</div>
 
-<asyncapi-viewer src="examples/orders-v3.yaml" class="demo-custom" themeToggle></asyncapi-viewer>
+<asyncapi-viewer id="demo-viewer" src="examples/orders-v3.yaml" sendLabel="EMIT" receiveLabel="ON"></asyncapi-viewer>
 
-## Error handling (this one is meant to fail)
-
-The element below points at a host that does not exist, to show what readers see when a document
-cannot be loaded: a message in place of the viewer, naming the URL, instead of a blank box. A wrong
-local path is caught earlier, at build time, because `mkdocs build --strict` fails on it.
-
-```markdown
-<asyncapi-viewer src="https://example.invalid/asyncapi.yaml"></asyncapi-viewer>
-```
-
-<asyncapi-viewer src="https://example.invalid/asyncapi.yaml"></asyncapi-viewer>
+The Adeo and Streetlights documents are from the
+[AsyncAPI specification examples](https://github.com/asyncapi/spec/tree/master/examples)
+(Apache-2.0).

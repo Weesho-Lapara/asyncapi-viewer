@@ -132,7 +132,7 @@ jobs:
       - name: Both outputs contain the rendered demo and serve the viewer
         run: |
           for site in site-mkdocs site; do
-            test "$(grep -o '<asyncapi-viewer [^>]*src="[^"]*"' "$site/demo/index.html" | wc -l)" -ge 4 || { echo "no viewer markup in $site"; exit 1; }
+            test "$(grep -o '<asyncapi-viewer [^>]*src="[^"]*"' "$site/demo/index.html" | wc -l)" -ge 1 || { echo "no viewer markup in $site"; exit 1; }
             grep -q 'type="module" src="[^"]*assets/asyncapi-viewer/asyncapi-viewer.js"' "$site/demo/index.html" || { echo "no module script in $site"; exit 1; }
             grep -q 'data-asyncapi-fallback' "$site/demo/index.html" || { echo "no search fallback in $site"; exit 1; }
             test -s "$site/assets/asyncapi-viewer/asyncapi-viewer.js" || { echo "viewer not served by $site"; exit 1; }

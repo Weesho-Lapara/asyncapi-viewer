@@ -7,9 +7,15 @@ asyncapi-viewer {
   margin: 1.5rem 0;
 }
 
-/* The "Customise" example on the demo page: two accents and a squarer radius. */
-asyncapi-viewer.demo-custom {
-  --asyncapi-primary: #0F766E;
-  --asyncapi-secondary: #9F1239;
-  --asyncapi-radius: 4px;
+/* The live demo's document picker (docs/demo.md, javascripts/demo.js). */
+.demo-select {
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--md-default-fg-color);
+  background: var(--md-default-bg-color);
+  border: 1px solid var(--md-default-fg-color--lighter);
+  border-radius: 0.2rem;
+  padding: 0.4em 0.6em;
+  margin-bottom: 0.5rem;
+  max-width: 100%;
 }

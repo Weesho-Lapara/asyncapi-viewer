@@ -21,8 +21,7 @@ With the demo's two accents and a squarer radius, three lines of CSS (shown belo
 ## Where to put overrides
 
 Any stylesheet loaded after the theme file works, so under MkDocs an `extra_css` file is the usual
-place. Scope the rules to one viewer with a class when a page has several, as the
-[demo](demo.md#customised) does:
+place. Scope the rules to one viewer with a class when a page has several:
 
 ```css title="docs/stylesheets/extra.css"
 asyncapi-viewer {

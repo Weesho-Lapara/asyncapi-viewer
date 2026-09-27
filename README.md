@@ -82,7 +82,7 @@ import type {} from 'asyncapi-viewer/react';   // JSX typing for React
 
 Or one script tag from jsDelivr, pinned to a version. TypeScript types ship with the package, the
 element fires `asyncapi-load` and `asyncapi-error` events, and a React 19 app is part of the test
-suite. Guide: https://weesho-lapara.github.io/asyncapi-viewer/web/
+suite. Guide: https://weesho-lapara.github.io/asyncapi-viewer/getting-started/
 
 ## Options
 
